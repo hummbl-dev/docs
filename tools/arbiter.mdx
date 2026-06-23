@@ -1,0 +1,209 @@
+---
+title: "Arbiter: Agent-Aware Code Quality Scoring for AI Codebases"
+sidebarTitle: "Arbiter"
+description: "Arbiter scores your codebase with per-commit agent attribution, tracking quality for Claude, Codex, Gemini, and human authors separately."
+---
+
+Arbiter is a CLI tool that scores your Python codebase for lint, security, complexity, and dead code — and breaks those scores down by the AI agent or human author behind each commit. As AI agents like Claude, Codex, and Gemini write increasing proportions of production code, traditional quality metrics that treat all code as equivalent become insufficient. Arbiter gives you per-agent scorecards so you can see exactly which agents produce clean, maintainable code and which ones accumulate technical debt.
+
+<Note>
+  The PyPI distribution is named `arbiter-score`, but the CLI command you run is `arbiter`.
+</Note>
+
+## Installation
+
+Arbiter's core is stdlib-only — no third-party dependencies required to install. The `[analyzers]` extra pulls in ruff, radon, vulture, and bandit to power the full analysis suite.
+
+<CodeGroup>
+```bash Core only
+pip install arbiter-score
+```
+
+```bash With all analyzers
+pip install "arbiter-score[analyzers]"
+```
+</CodeGroup>
+
+**Requirements:** Python 3.11+, git (required for commit history and agent attribution)
+
+## Quick Start
+
+Score your repo in two commands:
+
+```bash
+pip install "arbiter-score[analyzers]"
+arbiter score .
+```
+
+That's it. Arbiter walks your git history, attributes each commit to its author (human or AI agent), runs all configured analyzers, and prints a scorecard to your terminal.
+
+## Example Output
+
+```
+Arbiter Scorecard: my-repo (main)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Overall:  87.3  →  Grade: B
+
+By Analyzer:
+  Lint       91.2  (ruff — 3 style issues)
+  Security   95.0  (bandit — clean)
+  Complexity 78.5  (radon — 2 functions > complexity 10)
+  Dead Code  92.0  (vulture — 1 unused import)
+
+By Agent (last 30 days):
+  claude-code   89.1  (42 commits, 1,240 LOC)
+  codex         85.3  (18 commits, 890 LOC)
+  human         92.7  (5 commits, 120 LOC)
+
+Top Issues:
+  • src/api/routes.py:47  complexity C (15)  — agent: codex
+  • src/utils.py:12       unused import os   — agent: claude-code
+  • src/models.py:89      line too long      — agent: codex
+
+Run `arbiter serve` to view the full dashboard.
+```
+
+## Analyzers
+
+Arbiter runs up to six analyzers, each targeting a different quality dimension. The weighted analyzers contribute to the overall score; penalty analyzers subtract from it proportionally.
+
+| Analyzer | Tool | Weight | What It Finds |
+|---|---|---|---|
+| Lint | ruff | 35% | Style violations, import errors, bugbear patterns |
+| Security | bandit | 30% | Hardcoded secrets, shell injection, dangerous patterns |
+| Complexity | radon | 35% | Cyclomatic complexity (grade A–F per function) |
+| Dead Code | vulture | penalty | Unused functions, imports, and variables |
+| Duplication | AST hash | penalty | Near-duplicate function bodies |
+| Semgrep | semgrep | opt-in | Custom rule enforcement |
+
+## Scoring
+
+Arbiter computes a numeric score using the formula:
+
+```
+score = 100 - (penalty / LOC) * normalization
+```
+
+Scores map to letter grades as follows:
+
+| Score | Grade |
+|---|---|
+| 90 – 100 | A |
+| 80 – 89 | B |
+| 70 – 79 | C |
+| 60 – 69 | D |
+| < 60 | F |
+
+Each analyzer produces a weighted penalty based on the issues it finds relative to the total lines of code in scope. Dead code and duplication penalties are applied on top of the weighted score.
+
+## CLI Reference
+
+### Core Commands
+
+```bash
+# Full analysis: per-commit scoring + agent attribution + persisted history
+arbiter analyze <repo>
+
+# Quick score without persisting results
+arbiter score <repo>
+
+# Score only the files changed versus a base branch
+arbiter diff <repo> --base main
+
+# Output results as JSON (works with score and diff)
+arbiter score <repo> --json
+arbiter diff <repo> --base main --json
+
+# Exclude paths from scoring
+arbiter score <repo> --exclude tests/
+```
+
+### Agent Commands
+
+```bash
+# Print the agent leaderboard sorted by score
+arbiter agents
+
+# Show recent commits with per-commit scores, optionally filtered by agent
+arbiter commits
+arbiter commits --agent claude
+```
+
+### Fleet Commands
+
+```bash
+# Audit every repo in a directory and produce a summary report
+arbiter audit-fleet <directory>
+
+# Auto-classify repos into green / yellow / red / archive tiers
+arbiter triage
+```
+
+### Quality Trend
+
+```bash
+# Show score trend over time (default: last 30 days)
+arbiter trend
+arbiter trend --days 60
+```
+
+### Worst Files
+
+```bash
+# List the lowest-scoring files in the repo
+arbiter worst
+arbiter worst --limit 20
+```
+
+### Auto-Fix
+
+```bash
+# Apply ruff's auto-fixable suggestions and show before/after scores
+arbiter fix <repo>
+
+# Preview fixes without writing any changes
+arbiter fix <repo> --dry-run
+```
+
+### Dashboard
+
+```bash
+# Start the Arbiter API and dashboard (default port 8080)
+arbiter serve
+arbiter serve --port 9000
+```
+
+<Tip>
+  Run `arbiter serve` to open the full interactive dashboard — a single self-contained HTML file with per-agent quality timelines, commit-level drill-downs, and trend charts. No SaaS login or external service required.
+</Tip>
+
+## CI Integration
+
+### Fail on Score Drop
+
+Use `--fail-under` to enforce a minimum score in CI. Arbiter exits with a non-zero code if the score falls below the threshold, blocking merges automatically.
+
+```bash
+# Fail the build if the overall score drops below 90
+arbiter score . --fail-under 90
+```
+
+### PR Diff Mode
+
+For pull requests, score only the changed files against your base branch. This keeps feedback focused on what a contributor actually modified and avoids penalizing pre-existing issues.
+
+```bash
+# Score only files changed in this PR vs main; fail below 80
+arbiter diff . --base main --fail-under 80
+```
+
+### Example GitHub Actions Step
+
+```yaml
+- name: Arbiter quality gate
+  run: |
+    pip install "arbiter-score[analyzers]"
+    arbiter diff . --base main --fail-under 80
+```
+
+You can set different thresholds for different agent trust tiers — for example, requiring a stricter score from automated agents than from human-authored commits — using the `--agent` filter together with `--fail-under` in separate steps.

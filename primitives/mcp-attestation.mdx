@@ -1,0 +1,178 @@
+---
+title: "MCP Attestation: Local-First Governance for MCP Agents"
+sidebarTitle: "MCP Attestation"
+description: "Hummbl's MCP Attestation provides server allowlists, capability tokens, and tool-poisoning defense for Model Context Protocol agent systems."
+---
+
+The Model Context Protocol has become the default integration layer for AI agents — over 20,000 MCP servers are now publicly available, with 97 million monthly SDK downloads. That growth has also made MCP a major attack surface. Known incidents include CVE-2025-6514, the postmark-mcp backdoor that affected roughly 300 organisations, and MCPTox research demonstrating over 60% tool-poisoning success rates against undefended clients. MCP Attestation gives you local-first defences: server allowlists, cryptographic capability tokens on every tool call, and active scanning for tool-poisoning patterns — all logged to the Governance Bus.
+
+<Warning>
+  **Design Preview** — MCP Attestation ships with `hummbl-governance[mcp]`
+  targeting release v0.3. The API contract below is stable for integration
+  planning but is subject to change before general availability. Do not use
+  in production without pinning to a specific pre-release version.
+</Warning>
+
+## Why MCP needs governance
+
+MCP's open ecosystem means your agent can connect to servers written by anyone. Unverified servers can:
+
+- **Impersonate trusted services** (LLM04 — Server Impersonation) by registering similar names
+- **Inject malicious instructions** into tool descriptions that the LLM executes (LLM01 — Tool Poisoning)
+- **Claim excessive permissions** beyond what your agent authorised (LLM08 — Excessive Agency)
+- **Return sensitive data** embedded in tool responses that exfiltrates to the attacker (LLM06 — Sensitive Info Disclosure)
+
+MCP Attestation addresses all four attack classes with a single, composable API.
+
+## Install
+
+```bash
+pip install "hummbl-governance[mcp]"
+```
+
+## Quick start
+
+```python
+from hummbl_governance.mcp import Attest, Policy
+
+# Load your server allowlist and security policy
+policy = Policy.from_file("~/.hummbl/mcp-allowlist.yaml")
+attest = Attest(policy=policy, bus_path="_state/mcp_bus.jsonl")
+
+# Verify a server's identity before connecting
+FINGERPRINT = "sha256:a3f9c8...d124"
+if attest.verify_server("postmark-mcp", fingerprint=FINGERPRINT):
+    client.connect("postmark-mcp")
+else:
+    log.error("postmark-mcp not in allowlist or fingerprint mismatch — refusing connection")
+
+# Attest every tool call with a capability token
+receipt = attest.record(
+    server="filesystem-mcp",
+    tool="write_file",
+    args={"path": "/tmp/x.md"},
+    capability_token=current_dct,
+)
+
+# Scan tool responses for poisoning patterns before passing to the LLM
+findings = attest.scan_response(payload)
+if findings:
+    for f in findings:
+        log.warning("tool-poisoning finding: %s", f)
+    raise ValueError("suspicious tool response — aborting")
+```
+
+## Policy class
+
+The `Policy` object defines what servers your agent trusts and what constraints apply globally.
+
+<ParamField path="allowlist" type="list[str]">
+  Names of MCP servers your agent is permitted to connect to. Any server not
+  on this list is rejected by `verify_server` regardless of its fingerprint.
+</ParamField>
+
+<ParamField path="required_fingerprints" type="dict[str, str]">
+  A map of server name → expected TLS or content fingerprint. When a server
+  appears in this dict, `verify_server` rejects the connection if the observed
+  fingerprint does not match — even if the server name is on the allowlist.
+</ParamField>
+
+<ParamField path="denied_tools" type="list[str]">
+  Tool names that your agent must never call, regardless of which server
+  exposes them. Use this to block high-risk primitives like `shell.exec` or
+  `fs.delete` across all servers.
+</ParamField>
+
+<ParamField path="max_payload_bytes" type="int">
+  Maximum size of a tool response that will be passed to `scan_response`. 
+  Responses exceeding this limit are rejected outright, defending against
+  exfiltration attempts that rely on large hidden payloads.
+</ParamField>
+
+## Attest methods
+
+<ParamField path="verify_server" type="method">
+  **`verify_server(name: str, fingerprint: str) -> bool`**
+
+  Checks `name` against the policy allowlist and, if a required fingerprint is
+  configured for that server, verifies that `fingerprint` matches. Returns
+  `True` only when both checks pass. Logs the result to the Governance Bus.
+</ParamField>
+
+<ParamField path="record" type="method">
+  **`record(server: str, tool: str, args: dict, capability_token: str | None = None) -> Receipt`**
+
+  Writes an attestation record to the Governance Bus before the tool call
+  executes. The returned `Receipt` includes a unique call ID, timestamp, and
+  the capability token used (if any). Attach the receipt to your run log for
+  end-to-end traceability from agent decision to MCP tool invocation.
+</ParamField>
+
+<ParamField path="scan_response" type="method">
+  **`scan_response(payload: str) -> list[Finding]`**
+
+  Scans a raw tool response string for known tool-poisoning patterns:
+  hidden instruction injection, prompt-override attempts, and encoded
+  exfiltration payloads. Returns a list of `Finding` objects (empty list = clean).
+  Call this on every tool response before passing the content to your LLM.
+</ParamField>
+
+## OWASP MCP Top 10 coverage
+
+| OWASP ID | Attack | How MCP Attestation defends |
+|----------|--------|-----------------------------|
+| LLM01 | Tool Poisoning | `scan_response` detects injected instructions and prompt-override patterns in tool outputs before they reach the model. |
+| LLM04 | Server Impersonation | `verify_server` checks name against the allowlist and validates the TLS fingerprint against `required_fingerprints`. |
+| LLM06 | Sensitive Info Disclosure | `max_payload_bytes` rejects oversized responses; `scan_response` flags encoded exfiltration patterns. |
+| LLM08 | Excessive Agency | `denied_tools` blocks high-risk tools at the policy layer; `capability_token` on `record` ties every call to a scoped delegation token. |
+
+## MCP allowlist YAML example
+
+Store your policy file at `~/.hummbl/mcp-allowlist.yaml` (or any path you pass to `Policy.from_file`).
+
+```yaml
+# ~/.hummbl/mcp-allowlist.yaml
+
+allowlist:
+  - filesystem-mcp
+  - postmark-mcp
+  - github-mcp
+
+required_fingerprints:
+  postmark-mcp: "sha256:a3f9c8d1248b3e7f..."
+  github-mcp:   "sha256:c7e2f1a904b58d3c..."
+
+denied_tools:
+  - shell.exec
+  - fs.delete
+  - eval
+
+max_payload_bytes: 524288  # 512 KB
+```
+
+<Note>
+  Commit `mcp-allowlist.yaml` to version control. Treat changes to it like
+  changes to your firewall rules — review them in pull requests and capture
+  the rationale in commit messages. An allowlist that nobody audits is no
+  allowlist at all.
+</Note>
+
+<Tip>
+  Pair `required_fingerprints` with a pinned server version in your deployment
+  pipeline. A fingerprint mismatch after a server update is worth investigating
+  before connecting — legitimate maintainers typically announce fingerprint
+  changes in release notes.
+</Tip>
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Delegation Tokens" icon="key" href="/primitives/delegation-tokens">
+    Issue scoped capability tokens and pass them as the capability_token argument
+    to attest.record for end-to-end attribution.
+  </Card>
+  <Card title="Governance Bus" icon="scroll" href="/primitives/governance-bus">
+    All attestation events, fingerprint checks, and tool-poisoning findings are
+    written to the bus for audit and incident review.
+  </Card>
+</CardGroup>

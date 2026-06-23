@@ -1,0 +1,111 @@
+---
+title: "Hummbl: AI Governance Infrastructure for Agentic Systems"
+sidebarTitle: "Introduction"
+description: "Learn how Hummbl's stdlib-only Python libraries provide runtime governance for AI agents — audit trails, kill switches, delegation, and more."
+---
+
+Hummbl is open-source AI governance infrastructure designed for teams that build and operate AI agents. Rather than bolting governance on as a reporting layer after the fact, Hummbl embeds governance primitives — kill switches, delegation tokens, audit logs, and circuit breakers — directly into your agent's runtime as plain importable Python libraries. No SaaS accounts, no external dashboards, no runtime dependencies beyond the Python standard library.
+
+## The core philosophy
+
+Most AI governance tools work at the reporting layer: they collect logs, generate dashboards, and produce compliance PDFs. Hummbl works at a different level. Its primitives execute at the moment your agent decides and acts — before a request goes out, before a file is written, before a tool is called.
+
+The result is **governance at the runtime, not the reporting layer**. Audit evidence is generated as a byproduct of normal agent operation. Assessors and auditors receive portable, machine-readable records that prove what the agent was authorized to do and what it actually did.
+
+## The Governance Tuple: CONTRACT × DCT × EVIDENCE
+
+Every governed decision in Hummbl produces three records. Together they are called the Governance Tuple.
+
+- **CONTRACT** — a human-readable definition of what the agent is permitted to do (allowed operations, accessible resources, expiry).
+- **DCT (Delegation Cryptographic Token)** — a cryptographically bound token that ties the agent's identity to the contract's scope.
+- **EVIDENCE** — a tamper-evident audit log entry written at the moment the action occurs.
+
+```python
+import os
+os.environ["ENABLE_IDP"] = "true"
+
+from hummbl_governance import DelegationTokenManager, BusWriter
+
+# CONTRACT: define what the agent may do
+contract = {
+    "ops_allowed": ["read", "summarize"],
+    "resources": ["docs/*"],
+    "expiry": "2026-12-31T23:59:59Z"
+}
+
+# DCT: cryptographically bind the delegation
+# DelegationTokenManager accepts an optional secret: bytes | None = None
+dtm = DelegationTokenManager()
+token = dtm.create_token(
+    agent_id="summarizer-agent",
+    scope=contract["ops_allowed"],
+    ttl=3600,
+    chain_depth=1,
+)
+
+# EVIDENCE: audit what actually happened
+bus = BusWriter(bus_path="governance.jsonl")
+bus.post(
+    from_id="summarizer-agent",
+    to_id="all",
+    msg_type="ACTION",
+    message="read docs/report.md",
+)
+```
+
+Every time your agent runs, all three records are produced automatically. This makes compliance evidence a natural output of normal operation rather than a manual artifact you assemble after a review.
+
+## The seven governance primitives
+
+Hummbl ships seven primitives that you compose to govern agents at any scale.
+
+<CardGroup cols={2}>
+  <Card title="Governance Bus" icon="database">
+    A tamper-evident, append-only JSONL audit log. Every agent action writes a structured record.
+  </Card>
+  <Card title="Kill Switch" icon="power-off">
+    A hardware-style halt mechanism. When engaged, all agents check and stop before taking any action.
+  </Card>
+  <Card title="Delegation Tokens" icon="key">
+    Scoped, time-bounded tokens that define exactly what an agent may do. All operations are checked at runtime.
+  </Card>
+  <Card title="Delegation Context" icon="sitemap">
+    Tracks multi-agent delegation chains so you know which agent authorized which downstream agent.
+  </Card>
+  <Card title="Circuit Breaker" icon="bolt">
+    Wraps external calls and halts an agent after a configurable failure threshold, with automatic recovery.
+  </Card>
+  <Card title="Base120 Models" icon="brain">
+    120 structured reasoning models for agent decision-making, shipped as a separate stdlib-only library.
+  </Card>
+  <Card title="MCP Attestation" icon="shield-check">
+    Governance for Model Context Protocol servers — attests tool calls and logs them to the governance bus.
+  </Card>
+</CardGroup>
+
+## Who Hummbl is for
+
+Hummbl is built for four types of teams:
+
+- **AI-native product teams** that want governance baked into their agent pipelines from day one, not retrofitted later.
+- **Regulated industries** — finance, healthcare, legal — where agent actions must be auditable and attributable.
+- **Defense and federal organizations** that operate in air-gapped or strict supply-chain environments and cannot accept third-party runtime dependencies.
+- **Agent platform builders** that need a portable governance layer they can embed in SDKs and frameworks they distribute to others.
+
+## Compliance framework coverage
+
+<Note>
+  Hummbl's governance records are designed to map directly to controls in the following frameworks. Refer to the [Compliance Readiness](/compliance/overview) section for detailed control mappings.
+</Note>
+
+Hummbl currently provides evidence artifacts and control mappings for:
+
+- **NIST AI RMF** — Map, Measure, Manage, Govern functions
+- **ISO 42001** — AI management system requirements
+- **EU AI Act** — High-risk AI system obligations
+- **SOC 2** — Trust services criteria (availability, confidentiality, processing integrity)
+- **CMMC** — Cybersecurity Maturity Model Certification
+- **Colorado SB 24-205** — Developer and deployer obligations for high-risk AI systems
+- **Singapore IMDA** — Model AI Governance Framework
+
+Ready to add governance to your first agent? Head to the [Quickstart](/quickstart).

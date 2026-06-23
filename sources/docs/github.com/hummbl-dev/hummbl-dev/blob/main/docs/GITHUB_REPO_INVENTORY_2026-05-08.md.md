@@ -1,0 +1,167 @@
+# Source: https://github.com/hummbl-dev/hummbl-dev/blob/main/docs/GITHUB_REPO_INVENTORY_2026-05-08.md
+
+[hummbl-dev](https://github.com/hummbl-dev) / **[hummbl-dev](https://github.com/hummbl-dev/hummbl-dev)** Public
+
+- [Notifications](https://github.com/login?return_to=%2Fhummbl-dev%2Fhummbl-dev) You must be signed in to change notification settings
+- [Fork 0](https://github.com/login?return_to=%2Fhummbl-dev%2Fhummbl-dev)
+- [Star 0](https://github.com/login?return_to=%2Fhummbl-dev%2Fhummbl-dev)
+ 
+
+ 
+
+## FilesExpand file tree
+
+ main
+
+/
+
+# GITHUB\_REPO\_INVENTORY\_2026-05-08.md
+
+Copy path
+
+Blame
+
+More file actions
+
+Blame
+
+More file actions
+
+## Latest commit
+
+## History
+
+[History](https://github.com/hummbl-dev/hummbl-dev/commits/main/docs/GITHUB_REPO_INVENTORY_2026-05-08.md)
+
+History
+
+98 lines (90 loc) · 11.6 KB
+
+ main
+
+/
+
+# GITHUB\_REPO\_INVENTORY\_2026-05-08.md
+
+Copy path
+
+Top
+
+## File metadata and controls
+
+- Preview
+ 
+- Code
+ 
+- Blame
+ 
+
+98 lines (90 loc) · 11.6 KB
+
+[Raw](https://github.com/hummbl-dev/hummbl-dev/raw/refs/heads/main/docs/GITHUB_REPO_INVENTORY_2026-05-08.md)
+
+Copy raw file
+
+Download raw file
+
+Outline
+
+Edit and raw actions
+
+# HUMMBL Dev Repository Inventory - 2026-05-08
+
+Read-only inventory generated from GitHub org hummbl-dev on 2026-05-08.
+
+**Correction (2026-06-13):** Archived count corrected from 2 to 20 to match GitHub API. Original inventory had stale data. **Correction (2026-06-17):** Total count corrected from 54 to 76 per operator confirmation. 5 new ML systems repos added to matrix.
+
+## Summary
+
+| Metric | Count |
+| --- | --: |
+| Total repositories | 54 |
+| Active public repositories | 35 |
+| Active private repositories | 17 |
+| Archived repositories | 20 |
+
+## Languages
+
+| Primary language | Repositories |
+| --- | --: |
+| Python | 27 |
+| None | 10 |
+| TypeScript | 5 |
+| HTML | 4 |
+| Shell | 3 |
+| TeX | 2 |
+| Go Template | 1 |
+| Java | 1 |
+| JavaScript | 1 |
+
+## Repository Matrix
+
+| Repository | Visibility | Default | Language | Last push | Description |
+| --- | --- | --- | --- | --- | --- |
+| [founder-mode](https://github.com/hummbl-dev/founder-mode) | PRIVATE | main | Python | 2026-05-08 | AI agent coordination workspace with governed execution, multi-agent orchestration, and morning briefing workflows fo... |
+| [fractional-bench](https://github.com/hummbl-dev/fractional-bench) | PRIVATE | main | \- | 2026-05-08 | HUMMBL Fractional Bench — 16-arc productized Haiku Hardening methodology (8 legal + 8 exec) |
+| [evidence-gate](https://github.com/hummbl-dev/evidence-gate) | PUBLIC | main | Python | 2026-05-08 | Pre-publish source-verification rule library for HUMMBL governance content. Stdlib-only TOML rules + fixture harness ... |
+| [hummbl-production](https://github.com/hummbl-dev/hummbl-production) | PRIVATE | main | HTML | 2026-05-08 | Production Cloudflare Workers stack powering hummbl.io — D1, KV, Claude API |
+| [coaching](https://github.com/hummbl-dev/coaching) | PRIVATE | main | \- | 2026-05-07 | Open-source coaching methodology, programming, and education from Reuben Bowlby (NSCA All-American, Masters World Cha... |
+| [hummbl-bibliography](https://github.com/hummbl-dev/hummbl-bibliography) | PUBLIC | main | TeX | 2026-05-07 | HUMMBL Bibliography repo |
+| [mcp-server](https://github.com/hummbl-dev/mcp-server) | PUBLIC | main | TypeScript | 2026-05-07 | HUMMBL MCP Server |
+| [hummbl-governance](https://github.com/hummbl-dev/hummbl-governance) | PUBLIC | main | Python | 2026-05-04 | Governance runtime for AI agent orchestration — kill switch, circuit breaker, cost governor, delegation tokens, audit... |
+| [hummbl-agent](https://github.com/hummbl-dev/hummbl-agent) | PUBLIC | main | TypeScript | 2026-05-04 | Repository for agentic orchestration with HUMMBL - Highly Useful Mental Model Base Language |
+| [arcana](https://github.com/hummbl-dev/arcana) | PRIVATE | master | Python | 2026-05-03 | Multi-lens governance / political-philosophy analysis pipeline. ARCANA (theoretical) + PRAXIS (enacted archetypes) + ... |
+| [autoresearch-win-rtx](https://github.com/hummbl-dev/autoresearch-win-rtx) | PUBLIC | master | Python | 2026-05-03 | |
+| [autoresearch](https://github.com/hummbl-dev/autoresearch) | PUBLIC | master | Python | 2026-05-03 | AI agents running research on single-GPU nanochat training automatically |
+| [hummbl-tuples](https://github.com/hummbl-dev/hummbl-tuples) | PRIVATE | main | Python | 2026-04-30 | Governed IDP tuples for the HUMMBL reasoning mesh. |
+| [krineia](https://github.com/hummbl-dev/krineia) | PUBLIC | main | \- | 2026-04-27 | Formerly named verum; renamed 2026-05-13 |
+| [claude-config](https://github.com/hummbl-dev/claude-config) | PRIVATE | main | Shell | 2026-04-26 | Claude Code profile config (rules/skills/hooks/memory) — Anvil-side |
+| [hummbl-doctrine](https://github.com/hummbl-dev/hummbl-doctrine) | PRIVATE | main | Python | 2026-04-24 | HUMMBL operator framework — internal R&D |
+| [hummbl-spacetime](https://github.com/hummbl-dev/hummbl-spacetime) | PRIVATE | master | Python | 2026-04-24 | Prompt composition for spacetime mental models. v0.1 skeleton. |
+| [Real-Time-Voice-Cloning](https://github.com/hummbl-dev/Real-Time-Voice-Cloning) | PUBLIC | master | Python | 2026-04-22 | Clone a voice in 5 seconds to generate arbitrary speech in real-time |
+| [autoresearch-pipeline](https://github.com/hummbl-dev/autoresearch-pipeline) | PRIVATE | main | Python | 2026-04-22 | |
+| [autoresearch-reports](https://github.com/hummbl-dev/autoresearch-reports) | PUBLIC | main | Shell | 2026-04-21 | |
+| [agent-governance-demo](https://github.com/hummbl-dev/agent-governance-demo) | PUBLIC | main | Python | 2026-04-19 | Runtime safety primitives for AI agent systems — kill switch, circuit breaker, delegation tokens, governance bus. Zer... |
+| [arbiter](https://github.com/hummbl-dev/arbiter) | PUBLIC | main | Python | 2026-04-19 | Agent-aware code quality scoring — cyclomatic complexity, dependency analysis, test coverage, governance compliance. ... |
+| [sint-protocol](https://github.com/hummbl-dev/sint-protocol) | PUBLIC | master | TypeScript | 2026-04-19 | Runtime authorization & audit layer for physical AI — T0–T3 tiers, capability tokens, Ed25519, ROS2/MCP/MAVLink bridg... |
+| [bif](https://github.com/hummbl-dev/bif) | PUBLIC | main | Python | 2026-04-19 | Batch Ingestion Framework — systematic methodology for technical knowledge acquisition using AI assistants |
+| [hummbl-brand](https://github.com/hummbl-dev/hummbl-brand) | PRIVATE | main | HTML | 2026-04-19 | |
+| [hummbl-theory](https://github.com/hummbl-dev/hummbl-theory) | PUBLIC | main | \- | 2026-04-18 | Theoretical foundations for HUMMBL, Base120, HCC, and BKI — provenance corpus, BibTeX citations, position papers |
+| [deer-flow](https://github.com/hummbl-dev/deer-flow) | PUBLIC | main | Python | 2026-04-18 | An open-source long-horizon SuperAgent harness that researches, codes, and creates. With the help of sandboxes, memor... |
+| [governed-compression](https://github.com/hummbl-dev/governed-compression) | PUBLIC | main | Python | 2026-04-18 | Governed vector and KV-cache compression research — CPU reference, reproducible benchmarks, tuple-based experiment lo... |
+| [cli](https://github.com/hummbl-dev/cli) | PUBLIC | master | Python | 2026-04-18 | 🥧 HTTPie CLI — modern, user-friendly command-line HTTP client for the API era. JSON support, colors, sessions, down... |
+| [paramiko](https://github.com/hummbl-dev/paramiko) | PUBLIC | main | Python | 2026-04-18 | The leading native Python SSHv2 protocol library. |
+| [rich](https://github.com/hummbl-dev/rich) | PUBLIC | master | Python | 2026-04-18 | Rich is a Python library for rich text and beautiful formatting in the terminal. |
+| [vllm](https://github.com/hummbl-dev/vllm) | PUBLIC | main | Python | 2026-04-18 | A high-throughput and memory-efficient inference and serving engine for LLMs |
+| [skills](https://github.com/hummbl-dev/skills) | PUBLIC | main | Python | 2026-04-18 | Public repository for Agent Skills |
+| [markitdown](https://github.com/hummbl-dev/markitdown) | PUBLIC | main | Python | 2026-04-18 | Python tool for converting files and office documents to Markdown. |
+| [hummbl-dev](https://github.com/hummbl-dev/hummbl-dev) | PUBLIC | main | HTML | 2026-04-18 | HUMMBL, LLC — Governed AI agent infrastructure. Base120 cognitive framework, stdlib-only governance on PyPI, MCP inte... |
+| [hummbl-assurance](https://github.com/hummbl-dev/hummbl-assurance) | PRIVATE | main | Python | 2026-04-18 | ARCHIVED — EAL merged into hummbl-governance (PR #12). Vendor scorecards retained for reference. |
+| [base120](https://github.com/hummbl-dev/base120) | PUBLIC | main | Python | 2026-04-18 | Base120 is a deterministic governance substrate for system design, validation, and execution. It defines executable m... |
+| [hummbl-research](https://github.com/hummbl-dev/hummbl-research) | PRIVATE | main | Python | 2026-04-18 | research repo |
+| [CL4R1T4S](https://github.com/hummbl-dev/CL4R1T4S) | PUBLIC | main | \- | 2026-04-17 | LEAKED SYSTEM PROMPTS FOR CHATGPT, GEMINI, GROK, CLAUDE, PERPLEXITY, CURSOR, DEVIN, REPLIT, AND MORE! - AI SYSTEMS TR... |
+| [hummbl-papers](https://github.com/hummbl-dev/hummbl-papers) | PUBLIC | main | \- | 2026-04-16 | HUMMBL Research — governance infrastructure papers and reproducibility artifacts |
+| [.github](https://github.com/hummbl-dev/.github) | PUBLIC | main | \- | 2026-04-14 | HUMMBL organization profile |
+| [swarm-test](https://github.com/hummbl-dev/swarm-test) | PRIVATE | main | Shell | 2026-04-07 | Multi-machine swarm dispatch testing — parallel agent coordination across SSH |
+| [ST3GG](https://github.com/hummbl-dev/ST3GG) | PUBLIC | main | HTML | 2026-04-02 | All-in-one steganography suite |
+| [OBLITERATUS](https://github.com/hummbl-dev/OBLITERATUS) | PUBLIC | main | Python | 2026-04-01 | OBLITERATE THE CHAINS THAT BIND YOU |
+| [hummbl-iac](https://github.com/hummbl-dev/hummbl-iac) | PRIVATE | main | Go Template | 2026-04-01 | Infrastructure-as-Code for the HUMMBL dev fleet — chezmoi dotfiles, package manifests, service definitions, network t... |
+| [G0DM0D3](https://github.com/hummbl-dev/G0DM0D3) | PUBLIC | main | TypeScript | 2026-03-26 | LIBERATED AI CHAT |
+| [HUMMBL-Unified-Tier-Framework](https://github.com/hummbl-dev/HUMMBL-Unified-Tier-Framework) | PUBLIC | main | Python | 2026-03-25 | Problem complexity classification and learning progression framework with quantitative wickedness assessment methodol... |
+| [hummbl-cca-f](https://github.com/hummbl-dev/hummbl-cca-f) | PRIVATE | main | \- | 2026-03-25 | HUMMBL Certified Claude Architect — Foundation (CCA-F) certification materials |
+| [meeting-archive](https://github.com/hummbl-dev/meeting-archive) | PRIVATE | main | \- | 2026-03-25 | Meeting transcripts and synthesis (Dan & Reuben co-founder syncs) |
+| [V3SP3R](https://github.com/hummbl-dev/V3SP3R) | PUBLIC | main | Java | 2026-03-24 | AI Flipper control |
+| [NATURA](https://github.com/hummbl-dev/NATURA) | PUBLIC | main | TypeScript | 2026-03-24 | Prompt injection attack and defense research |
+| [hummbl-kernel-factory](https://github.com/hummbl-dev/hummbl-kernel-factory) | PUBLIC | main | \- | 2026-03-19 | Meta-kernel factory for generating domain-specific agentic kernels |
+| [hummbl-gameboard](https://github.com/hummbl-dev/hummbl-gameboard) | PRIVATE | main | \- | 2026-03-19 | Canonical integration surface for fleet governance, reasoning, and operations |
+| [whether-book](https://github.com/hummbl-dev/whether-book) | PRIVATE | main | \- | 2026-03-18 | Whether Book — a governed book system that turns external inputs into verifiable, publishable book material |
+| [hummbl-system-prompts](https://github.com/hummbl-dev/hummbl-system-prompts) | PRIVATE | main | \- | 2026-03-14 | HUMMBL system prompts collection |
+| [hummbl-music](https://github.com/hummbl-dev/hummbl-music) | PRIVATE | main | \- | 2026-03-14 | Music generation and analysis tools |
+| [hummbl-graphs](https://github.com/hummbl-dev/hummbl-graphs) | PRIVATE | main | \- | 2026-03-14 | Graph-based knowledge representation |
+| [unified-frameworks](https://github.com/hummbl-dev/unified-frameworks) | PRIVATE | main | \- | 2026-03-14 | Governed prior-art corpus and framework definitions for the HUMMBL Unified Framework family (USNF, USF, UNF, UGF, UFR) |
+| [hummbl](https://github.com/hummbl-dev/hummbl) | PRIVATE | main | \- | 2026-03-14 | Structured reasoning framework for AI agents |
+| [apex-nexus](https://github.com/hummbl-dev/apex-nexus) | PRIVATE | main | \- | 2026-03-13 | Apex nexus governance |
+| [fleet-standard](https://github.com/hummbl-dev/fleet-standard) | PRIVATE | main | \- | 2026-03-12 | Fleet standards and protocols |
+| [hummingbird](https://github.com/hummbl-dev/hummingbird) | PRIVATE | main | \- | 2026-03-11 | Hummingbird AI assistant |
+| [corpus](https://github.com/hummbl-dev/corpus) | PRIVATE | main | \- | 2026-03-10 | Knowledge corpus |
+| [baseN](https://github.com/hummbl-dev/baseN) | PRIVATE | main | \- | 2026-03-10 | BaseN cognitive framework |

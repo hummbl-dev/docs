@@ -1,0 +1,87 @@
+---
+title: "Base120: 120 Mental Models for Structured AI Reasoning"
+sidebarTitle: "Overview"
+description: "Base120 provides 120 canonical mental models across 6 transformation families for AI agents. Available as a Python SDK, REST API, CLI, and MCP server."
+---
+
+Base120 is Hummbl's reasoning substrate — a curated taxonomy of 120 canonical mental models that give AI agents, prompt pipelines, and decision-support tools a shared vocabulary for structured thinking. Each model has a stable code (like `P1`, `IN6`, or `DE7`), a definition, usage guidance, and worked examples. By naming the reasoning move you're making, you make agent behavior inspectable, auditable, and reproducible.
+
+## The 6 Transformation Families
+
+Base120 organizes all 120 models into six transformation families. Every model belongs to exactly one family, and the family code forms the prefix of the model's unique code.
+
+| Code | Family | Purpose |
+|------|--------|---------|
+| **P** | Perspective | Frame and anchor point of view. Define what something is. |
+| **IN** | Inversion | Reverse assumptions. Examine opposites, edges, negations. |
+| **CO** | Composition | Combine parts into coherent wholes. |
+| **DE** | Decomposition | Break complex systems into constituent parts. |
+| **RE** | Recursion | Apply operations iteratively; outputs become inputs. |
+| **SY** | Systems | Understand systems of systems; coordination and emergence. |
+
+Each family captures a distinct cognitive operation. Use **P** to establish what a problem even is before you try to solve it. Use **IN** to stress-test assumptions. Use **CO** and **DE** to move between synthesis and analysis. Use **RE** when a process needs to feed back on itself. Use **SY** when you're dealing with interdependencies that can't be reduced to their parts.
+
+## How Base120 Is Delivered
+
+Base120 ships in four forms so you can integrate it wherever your reasoning happens — in Python code, over HTTP, from the terminal, or directly inside Claude Desktop.
+
+<CodeGroup>
+
+```bash Python SDK
+pip install hummbl-base120
+```
+
+```bash REST API
+curl https://api.hummbl.io/v1/models/P1
+```
+
+```bash CLI
+python -m hummbl_base120 get P1
+```
+
+```bash MCP Server
+npm install -g @hummbl/mcp-server
+```
+
+</CodeGroup>
+
+## Key Properties
+
+Base120 v1.0.0 is **frozen** — the 120 model codes and their definitions will not change. This stability makes Base120 safe to reference in agent prompts, compliance records, and audit logs without worrying about silent semantic drift.
+
+Every model exposes the same six fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `code` | `str` | Stable identifier, e.g. `"P1"`, `"IN6"`, `"DE7"` |
+| `name` | `str` | Human-readable name, e.g. `"First Principles Framing"` |
+| `transformation` | `str` | Family code: `"P"`, `"IN"`, `"CO"`, `"DE"`, `"RE"`, or `"SY"` |
+| `definition` | `str` | What this model is |
+| `usage` | `str` | When and how to use it |
+| `examples` | `list[str]` | 2–3 worked examples |
+| `related` | `list[str]` | Codes of related models |
+
+## Use Cases
+
+**Agent reasoning traces.** When an agent selects `DE7: Pareto Decomposition` to prioritize features, that code is a precise, human-readable record of the reasoning move — not a black-box embedding. Pipe it into your audit log and you have a governance-ready reasoning trace.
+
+**Prompt engineering.** Inject specific model codes into system prompts to constrain how a model reasons. Instead of "think carefully," write "apply IN17: Counterfactual Negation — ask what a bad outcome looks like, then invert."
+
+**Decision support tooling.** Use `Engine.recommend()` to surface the most relevant mental models for any free-text problem statement. Let Base120 bridge the gap between a user's natural language and a structured reasoning approach.
+
+**Reviewable AI reasoning.** Because every model has a stable code and a plain-English definition, non-technical reviewers can inspect an agent's reasoning chain without needing to understand the underlying model weights.
+
+<CardGroup cols={2}>
+  <Card title="SDK Reference" icon="code" href="/base120/sdk-reference">
+    Full Python SDK docs: Engine.select, Engine.apply, Engine.recommend, the Krineia Ledger, and CLI commands.
+  </Card>
+  <Card title="MCP Server" icon="plug" href="/base120/mcp-server">
+    Give Claude Desktop and other MCP clients direct access to all 120 models and reasoning tools.
+  </Card>
+  <Card title="REST API" icon="globe" href="/base120/rest-api">
+    Fetch models, get recommendations, and check API health over HTTP. No authentication required.
+  </Card>
+  <Card title="CLI Usage" icon="terminal" href="/base120/sdk-reference#cli">
+    Run Base120 commands directly from your terminal without writing any Python.
+  </Card>
+</CardGroup>

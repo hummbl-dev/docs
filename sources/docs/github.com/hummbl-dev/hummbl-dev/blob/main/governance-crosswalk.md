@@ -1,0 +1,939 @@
+# Source: https://github.com/hummbl-dev/hummbl-dev/blob/main/governance-crosswalk.html
+
+[hummbl-dev](https://github.com/hummbl-dev) / **[hummbl-dev](https://github.com/hummbl-dev/hummbl-dev)** Public
+
+- [Notifications](https://github.com/login?return_to=%2Fhummbl-dev%2Fhummbl-dev) You must be signed in to change notification settings
+- [Fork 0](https://github.com/login?return_to=%2Fhummbl-dev%2Fhummbl-dev)
+- [Star 0](https://github.com/login?return_to=%2Fhummbl-dev%2Fhummbl-dev)
+ 
+
+ 
+
+## FilesExpand file tree
+
+ main
+
+/
+
+# governance-crosswalk.html
+
+Copy path
+
+Blame
+
+More file actions
+
+Blame
+
+More file actions
+
+## Latest commit
+
+## History
+
+[History](https://github.com/hummbl-dev/hummbl-dev/commits/main/governance-crosswalk.html)
+
+History
+
+314 lines (283 loc) · 16.6 KB
+
+## FilesExpand file tree
+
+ main
+
+/
+
+# governance-crosswalk.html
+
+Copy path
+
+Top
+
+## File metadata and controls
+
+- Code
+ 
+- Blame
+ 
+
+314 lines (283 loc) · 16.6 KB
+
+[Raw](https://github.com/hummbl-dev/hummbl-dev/raw/refs/heads/main/governance-crosswalk.html)
+
+Copy raw file
+
+Download raw file
+
+Open symbols panel
+
+Edit and raw actions
+
+<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Governance Crosswalk | HUMMBL</title> <style> @page { size: letter landscape; margin: 0.4in; } @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .no-print { display: none !important; } .page { padding: 0; } } \* { margin: 0; padding: 0; box-sizing: border-box; } body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #fafafa; color: #e0e0e0; line-height: 1.5; font-size: 14px; } .page { max-width: 1200px; margin: 0 auto; padding: 40px 32px 60px; } /\* Print button \*/ .print-btn { position: fixed; top: 16px; right: 16px; background: #166534; color: #fafafa; border: none; padding: 10px 22px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'Courier New', monospace; z-index: 100; letter-spacing: 1px; } .print-btn:hover { background: #00cc6a; } /\* Header \*/ .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 36px; padding-bottom: 16px; border-bottom: 2px solid #222; } .brand { font-family: 'Courier New', monospace; font-size: 22px; font-weight: 900; letter-spacing: 4px; color: #166534; } .brand-sub { font-size: 11px; color: #9ca3af; letter-spacing: 1px; margin-top: 2px; } .header-right { text-align: right; font-size: 11px; color: #555; } /\* Hero \*/ .hero { text-align: center; margin-bottom: 40px; } .hero h1 { font-size: 36px; font-weight: 800; color: #fff; margin-bottom: 8px; } .hero h1 span { color: #166534; } .hero p { font-size: 16px; color: #888; max-width: 700px; margin: 0 auto; } /\* Insight box \*/ .insight { background: #111; border: 1px solid #16653433; border-left: 4px solid #166534; padding: 20px 24px; border-radius: 6px; margin-bottom: 40px; font-size: 15px; color: #ccc; } .insight strong { color: #166534; } /\* Matrix \*/ .matrix-wrap { overflow-x: auto; margin-bottom: 48px; } table { width: 100%; border-collapse: collapse; font-size: 13px; } th, td { padding: 10px 12px; text-align: left; border: 1px solid #f5f5f5; } thead th { background: #111; color: #166534; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; cursor: pointer; position: sticky; top: 0; user-select: none; white-space: nowrap; } thead th:first-child { cursor: default; min-width: 200px; } thead th:not(:first-child):hover { background: #1a3a28; } thead th.active-filter { background: #16653422; border-bottom: 2px solid #166534; } tbody tr { transition: background 0.15s; } tbody tr:nth-child(even) { background: #0f0f0f; } tbody tr:hover { background: #0d1f16 !important; } tbody td:first-child { font-weight: 600; color: #fff; } td.ref { color: #aaa; font-family: 'Courier New', monospace; font-size: 12px; } td.na { color: #333; text-align: center; } td.production { background: #16653410; color: #166534; font-weight: 600; } .col-highlight { background: #0d1f16 !important; } /\* Column filter state \*/ td.hidden-col, th.hidden-col { display: none; } /\* Sections \*/ .section { margin-bottom: 40px; } .section h2 { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #222; } .section h2 span { color: #166534; } /\* Capability cards \*/ .cap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; } .cap-card { background: #111; border: 1px solid #f5f5f5; border-radius: 8px; padding: 20px; } .cap-card h3 { color: #166534; font-size: 15px; margin-bottom: 6px; font-family: 'Courier New', monospace; } .cap-card p { font-size: 13px; color: #999; margin-bottom: 8px; } .cap-tag { display: inline-block; background: #16653415; color: #166534; font-size: 11px; padding: 2px 8px; border-radius: 3px; margin-right: 4px; margin-bottom: 4px; font-family: 'Courier New', monospace; } /\* ROI box \*/ .roi { background: linear-gradient(135deg, #0d1f16, #111); border: 2px solid #16653444; border-radius: 10px; padding: 28px 32px; margin-bottom: 40px; text-align: center; } .roi h2 { font-size: 22px; color: #fff; margin-bottom: 16px; } .roi-grid { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: 16px; max-width: 700px; margin: 0 auto; } .roi-item { text-align: center; } .roi-label { font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; } .roi-value { font-family: 'Courier New', monospace; font-size: 24px; font-weight: 900; } .roi-value.cost { color: #ff4444; } .roi-value.unified { color: #166534; } .roi-value.savings { color: #fff; } .roi-arrow { color: #333; font-size: 24px; } /\* Filter section \*/ .filter-section { background: #111; border: 1px solid #f5f5f5; border-radius: 8px; padding: 24px; margin-bottom: 40px; } .filter-section h3 { color: #fff; margin-bottom: 4px; font-size: 16px; } .filter-section p { color: #9ca3af; font-size: 13px; margin-bottom: 16px; } .filter-checks { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; } .filter-check { display: flex; align-items: center; gap: 6px; cursor: pointer; } .filter-check input { accent-color: #166534; width: 16px; height: 16px; cursor: pointer; } .filter-check label { color: #ccc; font-size: 13px; cursor: pointer; } #filter-results { font-size: 14px; color: #888; } #filter-results .needed { color: #166534; font-weight: 600; } /\* CTA \*/ .cta { background: #166534; color: #fafafa; border-radius: 10px; padding: 32px; text-align: center; margin-bottom: 40px; } .cta h2 { font-size: 24px; font-weight: 800; margin-bottom: 6px; } .cta p { font-size: 14px; margin-bottom: 4px; } .cta a { color: #fafafa; font-weight: 700; } /\* Footer \*/ .footer { text-align: center; padding-top: 24px; border-top: 1px solid #f5f5f5; font-size: 11px; color: #444; } </style> </head> <style>.tool-nav{background:#111;border-bottom:1px solid #222;padding:8px 24px;font-size:12px;font-family:'Courier New',monospace;display:flex;gap:12px;flex-wrap:wrap;align-items:center;}.tool-nav a{color:#9ca3af;text-decoration:none;}.tool-nav a:hover{color:#166534;}.tool-nav .current{color:#166534;font-weight:700;}@media print{.tool-nav{display:none;}}</style> <body> <nav class="tool-nav no-print"><a href="index.html">All Tools</a> | <a href="eu-ai-act-readiness.html">EU AI Act</a> <a href="nist-ai-rmf-readiness.html">NIST RMF</a> <a href="iso-42001-readiness.html">ISO 42001</a> <a href="singapore-agentic-readiness.html">Singapore</a> <a href="colorado-ai-act-readiness.html">Colorado</a> | <a href="compliance-calendar.html">Calendar</a> <a class="current" href="governance-crosswalk.html">Crosswalk</a></nav> <button class="print-btn no-print" onclick="window.print()">Save as PDF</button> <div class="page"> <div class="header"> <div> <div class="brand">HUMMBL</div> <div class="brand-sub">AI GOVERNANCE ENGINEERING</div> </div> <div class="header-right">governance-crosswalk<br>2026</div> </div> <div class="hero"> <h1>One Program. <span>Five Frameworks.</span></h1> <p>How a unified governance architecture satisfies multiple compliance requirements simultaneously</p> </div> <div class="insight"> Building separate compliance programs for each framework is <strong>3-5x more expensive</strong> than building one governance architecture that maps to all of them. This crosswalk shows exactly how each capability maps, so you build once and comply everywhere. </div> <!-- Crosswalk Matrix --> <div class="section"> <h2>The <span>Crosswalk</span> Matrix</h2> <div class="matrix-wrap"> <table id="crosswalk"> <thead> <tr> <th>Governance Capability</th> <th data-col="0">EU AI Act</th> <th data-col="1">NIST AI RMF</th> <th data-col="2">ISO 42001</th> <th data-col="3">Colorado SB 205</th> <th data-col="4">Singapore Agentic</th> </tr> </thead> <tbody id="matrix-body"></tbody> </table> </div> </div> <!-- Production Capabilities --> <div class="section"> <h2>HUMMBL's <span>Production-Proven</span> Capabilities</h2> <div class="cap-grid"> <div class="cap-card"> <h3>Coordination Bus</h3> <p>Append-only TSV audit log with 13,000+ governance events. Flock-based mutual exclusion ensures write integrity across concurrent agents.</p> <span class="cap-tag">EU Art. 12</span><span class="cap-tag">NIST MS-1</span><span class="cap-tag">ISO 9.1</span><span class="cap-tag">SG 3.5</span> </div> <div class="cap-card"> <h3>Kill Switch (4-Mode Halt)</h3> <p>DISENGAGED, HALT\_NONCRITICAL, HALT\_ALL, EMERGENCY. Graduated human override with confirmation dialogs and audit trail.</p> <span class="cap-tag">EU Art. 14</span><span class="cap-tag">NIST MG-1</span><span class="cap-tag">ISO A.7</span><span class="cap-tag">SG 3.4</span> </div> <div class="cap-card"> <h3>Delegation Tokens (HMAC-Signed)</h3> <p>HMAC-SHA256 signed Delegation Capability Tokens with chain depth enforcement. First known implementation of Singapore's delegation governance requirement.</p> <span class="cap-tag">SG 3.3</span><span class="cap-tag">SG 3.6</span> </div> <div class="cap-card"> <h3>Agent Identity Registry</h3> <p>Canonical agent registry with trust tiers, approved scopes, and identity validation. Guards against agent fabrication and identity fragmentation.</p> <span class="cap-tag">SG 3.1</span> </div> <div class="cap-card"> <h3>Circuit Breaker</h3> <p>Three-state circuit breaker (CLOSED / HALF\_OPEN / OPEN) wrapping all external adapters. Automatic degradation with health-based recovery.</p> <span class="cap-tag">EU Art. 15</span><span class="cap-tag">NIST MG-2</span> </div> <div class="cap-card"> <h3>Governance Bus (JSONL Audit)</h3> <p>Append-only JSONL governance audit log with IDP delegation tuples, content hashing, and tamper detection. Feature-flagged for incremental rollout.</p> <span class="cap-tag">EU Art. 12</span><span class="cap-tag">NIST MS-1</span><span class="cap-tag">ISO 9.1</span> </div> </div> </div> <!-- What Do I Need? --> <div class="filter-section no-print"> <h3>What Do I Need?</h3> <p>Select the frameworks that apply to your organization and see which governance capabilities you need.</p> <div class="filter-checks"> <div class="filter-check"><input type="checkbox" id="f-eu" data-fw="0"><label for="f-eu">EU AI Act</label></div> <div class="filter-check"><input type="checkbox" id="f-nist" data-fw="1"><label for="f-nist">NIST AI RMF</label></div> <div class="filter-check"><input type="checkbox" id="f-iso" data-fw="2"><label for="f-iso">ISO 42001</label></div> <div class="filter-check"><input type="checkbox" id="f-co" data-fw="3"><label for="f-co">Colorado SB 205</label></div> <div class="filter-check"><input type="checkbox" id="f-sg" data-fw="4"><label for="f-sg">Singapore Agentic</label></div> </div> <div id="filter-results"></div> </div> <!-- ROI --> <div class="roi"> <h2>The ROI of Unified Governance</h2> <div class="roi-grid"> <div class="roi-item"><div class="roi-label">Separate Programs (x5)</div><div class="roi-value cost">$750K-1.5M</div></div> <div class="roi-arrow">vs</div> <div class="roi-item"><div class="roi-label">Unified Architecture</div><div class="roi-value unified">$50-150K</div></div> <div class="roi-arrow">=</div> <div class="roi-item"><div class="roi-label">Your Savings</div><div class="roi-value savings">70-90%</div></div> </div> </div> <!-- CTA --> <div class="cta"> <h2>Free Crosswalk Assessment</h2> <p>We will map your existing governance controls to every framework you need to satisfy.</p> <p><a href="mailto:reuben@hummbl.io">reuben@hummbl.io</a></p> </div> <div class="footer">HUMMBL Governance Engineering &middot; hummbl.io &middot; 2026</div> </div> <script> const DATA = \[ \["Risk Management System", "Art. 9", "GOVERN (GV)", "Clause 6.1", "\\u00a76-1-1702", "Section 3.4", \[0,0,0,0,0\]\], \["AI System Inventory", "Art. 11", "MAP (MP-1)", "Annex A", "\\u00a76-1-1703", "Section 3.1", \[0,0,0,0,0\]\], \["Impact Assessment", "Art. 9", "MAP (MP-3)", "Clause 6.1.2","\\u00a76-1-1702", "Section 3.2", \[0,0,0,0,0\]\], \["Bias / Fairness Testing", "Art. 10", "MEASURE (MS-2)","Annex A.8", "\\u00a76-1-1703", null, \[0,0,0,0,0\]\], \["Transparency & Disclosure", "Art. 13", "GOVERN (GV-4)", "Clause 7.4", "\\u00a76-1-1703/1704","Section 3.1",\[0,0,0,0,0\]\], \["Human Oversight", "Art. 14", "GOVERN (GV-1)", "Annex A.7", null, "Section 3.2/3.4",\[0,0,0,0,0\]\], \["Audit Logging", "Art. 12", "MEASURE (MS-1)","Clause 9.1", null, "Section 3.5", \[1,1,1,0,1\]\], \["Data Governance", "Art. 10", "MAP (MP-4)", "Annex A.6", "\\u00a76-1-1702", null, \[0,0,0,0,0\]\], \["Incident Response", "Art. 62", "MANAGE (MG-3)", "Clause 10.2", null, "Section 3.4", \[0,0,0,0,0\]\], \["Technical Documentation", "Art. 11", "MAP (MP-2)", "Annex A.5", "\\u00a76-1-1704", "Section 3.1", \[0,0,0,0,0\]\], \["Performance Monitoring", "Art. 15", "MEASURE (MS-3)","Clause 9.1", null, "Section 3.5", \[1,0,0,0,0\]\], \["Kill Switch / Override", "Art. 14", "MANAGE (MG-1)", "Annex A.7", null, "Section 3.4", \[1,1,1,0,1\]\], \["Agent Identity", null, null, null, null, "Section 3.1", \[0,0,0,0,1\]\], \["Delegation Governance", null, null, null, null, "Section 3.3/3.6",\[0,0,0,0,1\]\], \["Autonomy Classification", null, "GOVERN (GV-2)", "Annex A.3", null, "Section 3.2", \[0,0,0,0,0\]\] \]; const tbody = document.getElementById('matrix-body'); DATA.forEach(row => { const tr = document.createElement('tr'); const nameTd = document.createElement('td'); nameTd.textContent = row\[0\]; tr.appendChild(nameTd); for (let i = 1; i <= 5; i++) { const td = document.createElement('td'); td.dataset.col = String(i - 1); if (row\[i\]) { td.textContent = row\[i\]; td.className = 'ref' + (row\[6\]\[i-1\] ? ' production' : ''); } else { td.innerHTML = '&mdash;'; td.className = 'na'; } tr.appendChild(td); } tbody.appendChild(tr); }); // Column highlight on hover const table = document.getElementById('crosswalk'); table.addEventListener('mouseover', e => { const td = e.target.closest('td, th'); if (!td || td.cellIndex === 0) return; const col = td.cellIndex; table.querySelectorAll('.col-highlight').forEach(el => el.classList.remove('col-highlight')); table.querySelectorAll(\`td:nth-child(${col+1}), th:nth-child(${col+1})\`).forEach(el => el.classList.add('col-highlight')); }); table.addEventListener('mouseleave', () => { table.querySelectorAll('.col-highlight').forEach(el => el.classList.remove('col-highlight')); }); // Column filter on header click let activeCol = null; document.querySelectorAll('thead th\[data-col\]').forEach(th => { th.addEventListener('click', () => { const col = th.dataset.col; if (activeCol === col) { // Deactivate: show all activeCol = null; document.querySelectorAll('\[data-col\]').forEach(el => el.classList.remove('hidden-col')); document.querySelectorAll('thead th').forEach(t => t.classList.remove('active-filter')); } else { activeCol = col; document.querySelectorAll('thead th\[data-col\]').forEach(t => { t.classList.toggle('active-filter', t.dataset.col === col); t.classList.toggle('hidden-col', t.dataset.col !== col); }); document.querySelectorAll('tbody td\[data-col\]').forEach(td => { td.classList.toggle('hidden-col', td.dataset.col !== col); }); } }); }); // "What do I need?" filter const checks = document.querySelectorAll('.filter-check input'); const filterOut = document.getElementById('filter-results'); checks.forEach(cb => cb.addEventListener('change', updateFilter)); function updateFilter() { const selected = \[\]; checks.forEach(cb => { if (cb.checked) selected.push(parseInt(cb.dataset.fw)); }); if (selected.length === 0) { filterOut.innerHTML = ''; return; } const needed = \[\]; DATA.forEach(row => { const applies = selected.some(fw => row\[fw + 1\] !== null); if (applies) needed.push(row\[0\]); }); filterOut.innerHTML = '<strong>You need ' + needed.length + ' capabilities:</strong><br>' + needed.map(n => '<span class="needed">' + n + '</span>').join(' &middot; '); } </script> </body> </html>
+
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
+9
+
+10
+
+11
+
+12
+
+13
+
+14
+
+15
+
+16
+
+17
+
+18
+
+19
+
+20
+
+21
+
+22
+
+23
+
+24
+
+25
+
+26
+
+27
+
+28
+
+29
+
+30
+
+31
+
+32
+
+33
+
+34
+
+35
+
+36
+
+37
+
+38
+
+39
+
+40
+
+41
+
+42
+
+43
+
+44
+
+45
+
+46
+
+47
+
+48
+
+49
+
+50
+
+51
+
+52
+
+53
+
+54
+
+55
+
+56
+
+57
+
+58
+
+59
+
+60
+
+61
+
+62
+
+63
+
+64
+
+65
+
+66
+
+67
+
+68
+
+69
+
+70
+
+71
+
+72
+
+73
+
+74
+
+75
+
+76
+
+77
+
+78
+
+79
+
+80
+
+81
+
+82
+
+83
+
+84
+
+85
+
+86
+
+87
+
+88
+
+89
+
+90
+
+91
+
+92
+
+93
+
+94
+
+95
+
+96
+
+97
+
+98
+
+99
+
+100
+
+101
+
+102
+
+103
+
+104
+
+105
+
+106
+
+107
+
+108
+
+109
+
+110
+
+111
+
+112
+
+113
+
+114
+
+115
+
+116
+
+117
+
+118
+
+119
+
+120
+
+121
+
+122
+
+123
+
+124
+
+125
+
+126
+
+127
+
+128
+
+129
+
+130
+
+131
+
+132
+
+133
+
+134
+
+135
+
+136
+
+137
+
+138
+
+139
+
+140
+
+141
+
+142
+
+143
+
+144
+
+145
+
+146
+
+147
+
+148
+
+149
+
+150
+
+151
+
+152
+
+153
+
+154
+
+155
+
+241
+
+242
+
+243
+
+244
+
+245
+
+246
+
+247
+
+248
+
+249
+
+250
+
+251
+
+252
+
+253
+
+254
+
+255
+
+256
+
+257
+
+258
+
+259
+
+260
+
+261
+
+262
+
+263
+
+264
+
+265
+
+266
+
+267
+
+268
+
+269
+
+270
+
+271
+
+272
+
+273
+
+274
+
+275
+
+276
+
+277
+
+278
+
+279
+
+280
+
+281
+
+282
+
+283
+
+284
+
+285
+
+286
+
+287
+
+288
+
+289
+
+290
+
+291
+
+292
+
+293
+
+294
+
+295
+
+296
+
+297
+
+298
+
+299
+
+300
+
+301
+
+302
+
+303
+
+304
+
+305
+
+306
+
+307
+
+308
+
+309
+
+310
+
+311
+
+312
+
+313
+
+314
+
+<!DOCTYPE html\>
+
+<html lang\="en"\>
+
+<head\>
+
+<meta charset\="UTF-8"\>
+
+<meta name\="viewport" content\="width=device-width, initial-scale=1.0"\>
+
+<title\>Governance Crosswalk | HUMMBL</title\>
+
+<style\>
+
+@page { size: letter landscape; margin: 0.4in; }
+
+@media print { body { \-webkit-print-color-adjust: exact; print-color-adjust: exact; } .no-print { display: none !important; } .page { padding: 0; } }
+
+\* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #fafafa; color: #e0e0e0; line-height: 1.5; font-size: 14px; }
+
+.page { max-width: 1200px; margin: 0 auto; padding: 40px 32px 60px; }
+
+/\* Print button \*/
+
+.print-btn { position: fixed; top: 16px; right: 16px; background: #166534; color: #fafafa; border: none; padding: 10px 22px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'Courier New', monospace; z-index: 100; letter-spacing: 1px; }
+
+.print-btn:hover { background: #00cc6a; }
+
+/\* Header \*/
+
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 36px; padding-bottom: 16px; border-bottom: 2px solid #222; }
+
+.brand { font-family: 'Courier New', monospace; font-size: 22px; font-weight: 900; letter-spacing: 4px; color: #166534; }
+
+.brand-sub { font-size: 11px; color: #9ca3af; letter-spacing: 1px; margin-top: 2px; }
+
+.header-right { text-align: right; font-size: 11px; color: #555; }
+
+/\* Hero \*/
+
+.hero { text-align: center; margin-bottom: 40px; }
+
+.hero h1 { font-size: 36px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+
+.hero h1 span { color: #166534; }
+
+.hero p { font-size: 16px; color: #888; max-width: 700px; margin: 0 auto; }
+
+/\* Insight box \*/
+
+.insight { background: #111; border: 1px solid #16653433; border-left: 4px solid #166534; padding: 20px 24px; border-radius: 6px; margin-bottom: 40px; font-size: 15px; color: #ccc; }
+
+.insight strong { color: #166534; }
+
+/\* Matrix \*/
+
+.matrix-wrap { overflow-x: auto; margin-bottom: 48px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+th, td { padding: 10px 12px; text-align: left; border: 1px solid #f5f5f5; }
+
+thead th { background: #111; color: #166534; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; cursor: pointer; position: sticky; top: 0; user-select: none; white-space: nowrap; }
+
+thead th:first-child { cursor: default; min-width: 200px; }
+
+thead th:not(:first-child):hover { background: #1a3a28; }
+
+thead th.active-filter { background: #16653422; border-bottom: 2px solid #166534; }
+
+tbody tr { transition: background 0.15s; }
+
+tbody tr:nth-child(even) { background: #0f0f0f; }
+
+tbody tr:hover { background: #0d1f16 !important; }
+
+tbody td:first-child { font-weight: 600; color: #fff; }
+
+td.ref { color: #aaa; font-family: 'Courier New', monospace; font-size: 12px; }
+
+td.na { color: #333; text-align: center; }
+
+td.production { background: #16653410; color: #166534; font-weight: 600; }
+
+.col-highlight { background: #0d1f16 !important; }
+
+/\* Column filter state \*/
+
+td.hidden-col, th.hidden-col { display: none; }
+
+/\* Sections \*/
+
+.section { margin-bottom: 40px; }
+
+.section h2 { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #222; }
+
+.section h2 span { color: #166534; }
+
+/\* Capability cards \*/
+
+.cap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+
+.cap-card { background: #111; border: 1px solid #f5f5f5; border-radius: 8px; padding: 20px; }
+
+.cap-card h3 { color: #166534; font-size: 15px; margin-bottom: 6px; font-family: 'Courier New', monospace; }
+
+.cap-card p { font-size: 13px; color: #999; margin-bottom: 8px; }
+
+.cap-tag { display: inline-block; background: #16653415; color: #166534; font-size: 11px; padding: 2px 8px; border-radius: 3px; margin-right: 4px; margin-bottom: 4px; font-family: 'Courier New', monospace; }
+
+/\* ROI box \*/
+
+.roi { background: linear-gradient(135deg, #0d1f16, #111); border: 2px solid #16653444; border-radius: 10px; padding: 28px 32px; margin-bottom: 40px; text-align: center; }
+
+.roi h2 { font-size: 22px; color: #fff; margin-bottom: 16px; }
+
+.roi-grid { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: 16px; max-width: 700px; margin: 0 auto; }
+
+.roi-item { text-align: center; }
+
+.roi-label { font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; }
+
+.roi-value { font-family: 'Courier New', monospace; font-size: 24px; font-weight: 900; }
+
+.roi-value.cost { color: #ff4444; }
+
+.roi-value.unified { color: #166534; }
+
+.roi-value.savings { color: #fff; }
+
+.roi-arrow { color: #333; font-size: 24px; }
+
+/\* Filter section \*/
+
+.filter-section { background: #111; border: 1px solid #f5f5f5; border-radius: 8px; padding: 24px; margin-bottom: 40px; }
+
+.filter-section h3 { color: #fff; margin-bottom: 4px; font-size: 16px; }
+
+.filter-section p { color: #9ca3af; font-size: 13px; margin-bottom: 16px; }
+
+.filter-checks { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+
+.filter-check { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+
+.filter-check input { accent-color: #166534; width: 16px; height: 16px; cursor: pointer; }
+
+.filter-check label { color: #ccc; font-size: 13px; cursor: pointer; }
+
+#filter-results { font-size: 14px; color: #888; }
+
+#filter-results .needed { color: #166534; font-weight: 600; }
+
+/\* CTA \*/
+
+.cta { background: #166534; color: #fafafa; border-radius: 10px; padding: 32px; text-align: center; margin-bottom: 40px; }
+
+.cta h2 { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+
+.cta p { font-size: 14px; margin-bottom: 4px; }
+
+.cta a { color: #fafafa; font-weight: 700; }
+
+/\* Footer \*/
+
+.footer { text-align: center; padding-top: 24px; border-top: 1px solid #f5f5f5; font-size: 11px; color: #444; }
+
+</style\>
+
+</head\>
+
+<style\>.tool-nav{background:#111;border-bottom:1px solid #222;padding:8px 24px;font-size:12px;font-family:'Courier New',monospace;display:flex;gap:12px;flex-wrap:wrap;align-items:center;}.tool-nav a{color:#9ca3af;text-decoration:none;}.tool-nav a:hover{color:#166534;}.tool-nav .current{color:#166534;font-weight:700;}@media print{.tool-nav{display:none;}}</style\>
+
+<body\>
+
+<nav class\="tool-nav no-print"\><a href\="index.html"\>All Tools</a\> | <a href\="eu-ai-act-readiness.html"\>EU AI Act</a\> <a href\="nist-ai-rmf-readiness.html"\>NIST RMF</a\> <a href\="iso-42001-readiness.html"\>ISO 42001</a\> <a href\="singapore-agentic-readiness.html"\>Singapore</a\> <a href\="colorado-ai-act-readiness.html"\>Colorado</a\> | <a href\="compliance-calendar.html"\>Calendar</a\> <a class\="current" href\="governance-crosswalk.html"\>Crosswalk</a\></nav\>
+
+<button class\="print-btn no-print" onclick\="window.print()"\>Save as PDF</button\>
+
+<div class\="page"\>
+
+<div class\="header"\>
+
+<div\>
+
+<div class\="brand"\>HUMMBL</div\>
+
+<div class\="brand-sub"\>AI GOVERNANCE ENGINEERING</div\>
+
+</div\>
+
+<div class\="header-right"\>governance-crosswalk<br\>2026</div\>
+
+</div\>
+
+<div class\="hero"\>
+
+<h1\>One Program. <span\>Five Frameworks.</span\></h1\>
+
+<p\>How a unified governance architecture satisfies multiple compliance requirements simultaneously</p\>
+
+</div\>
+
+<div class\="insight"\>
+
+Building separate compliance programs for each framework is <strong\>3-5x more expensive</strong\> than building one governance architecture that maps to all of them. This crosswalk shows exactly how each capability maps, so you build once and comply everywhere.
+
+</div\>
+
+<!-- Crosswalk Matrix -->
+
+<div class\="section"\>
+
+<h2\>The <span\>Crosswalk</span\> Matrix</h2\>
+
+<div class\="matrix-wrap"\>
+
+<table id\="crosswalk"\>
+
+<thead\>
+
+<tr\>
+
+<th\>Governance Capability</th\>
+
+<th data-col\="0"\>EU AI Act</th\>
+
+<th data-col\="1"\>NIST AI RMF</th\>
+
+<th data-col\="2"\>ISO 42001</th\>
+
+<th data-col\="3"\>Colorado SB 205</th\>
+
+<th data-col\="4"\>Singapore Agentic</th\>
+
+</tr\>
+
+</thead\>
+
+<tbody id\="matrix-body"\></tbody\>
+
+</table\>
+
+</div\>
+
+</div\>
+
+<!-- Production Capabilities -->
+
+<div class\="section"\>
+
+<h2\>HUMMBL's <span\>Production-Proven</span\> Capabilities</h2\>
+
+<div class\="cap-grid"\>
+
+<div class\="cap-card"\>
+
+<h3\>Coordination Bus</h3\>
+
+<p\>Append-only TSV audit log with 13,000+ governance events. Flock-based mutual exclusion ensures write integrity across concurrent agents.</p\>
+
+<span class\="cap-tag"\>EU Art. 12</span\><span class\="cap-tag"\>NIST MS-1</span\><span class\="cap-tag"\>ISO 9.1</span\><span class\="cap-tag"\>SG 3.5</span\>
+
+</div\>
+
+<div class\="cap-card"\>
+
+<h3\>Kill Switch (4-Mode Halt)</h3\>
+
+<p\>DISENGAGED, HALT\_NONCRITICAL, HALT\_ALL, EMERGENCY. Graduated human override with confirmation dialogs and audit trail.</p\>
+
+nameTd.textContent \= row\[0\];
+
+tr.appendChild(nameTd);
+
+for (let i \= 1; i <= 5; i++) {
+
+const td \= document.createElement('td');
+
+td.dataset.col \= String(i \- 1);
+
+if (row\[i\]) {
+
+td.textContent \= row\[i\];
+
+td.className \= 'ref' + (row\[6\]\[i\-1\] ? ' production' : '');
+
+} else {
+
+td.innerHTML \= '&mdash;';
+
+td.className \= 'na';
+
+}
+
+tr.appendChild(td);
+
+}
+
+tbody.appendChild(tr);
+
+});
+
+// Column highlight on hover
+
+const table \= document.getElementById('crosswalk');
+
+table.addEventListener('mouseover', e \=> {
+
+const td \= e.target.closest('td, th');
+
+if (!td || td.cellIndex \=== 0) return;
+
+const col \= td.cellIndex;
+
+table.querySelectorAll('.col-highlight').forEach(el \=> el.classList.remove('col-highlight'));
+
+table.querySelectorAll(\`td:nth-child(${col+1}), th:nth-child(${col+1})\`).forEach(el \=> el.classList.add('col-highlight'));
+
+});
+
+table.addEventListener('mouseleave', () \=> {
+
+table.querySelectorAll('.col-highlight').forEach(el \=> el.classList.remove('col-highlight'));
+
+});
+
+// Column filter on header click
+
+let activeCol \= null;
+
+document.querySelectorAll('thead th\[data-col\]').forEach(th \=> {
+
+th.addEventListener('click', () \=> {
+
+const col \= th.dataset.col;
+
+if (activeCol \=== col) {
+
+// Deactivate: show all
+
+activeCol \= null;
+
+document.querySelectorAll('\[data-col\]').forEach(el \=> el.classList.remove('hidden-col'));
+
+document.querySelectorAll('thead th').forEach(t \=> t.classList.remove('active-filter'));
+
+} else {
+
+activeCol \= col;
+
+document.querySelectorAll('thead th\[data-col\]').forEach(t \=> {
+
+t.classList.toggle('active-filter', t.dataset.col \=== col);
+
+t.classList.toggle('hidden-col', t.dataset.col !== col);
+
+});
+
+document.querySelectorAll('tbody td\[data-col\]').forEach(td \=> {
+
+td.classList.toggle('hidden-col', td.dataset.col !== col);
+
+});
+
+}
+
+});
+
+});
+
+// "What do I need?" filter
+
+const checks \= document.querySelectorAll('.filter-check input');
+
+const filterOut \= document.getElementById('filter-results');
+
+checks.forEach(cb \=> cb.addEventListener('change', updateFilter));
+
+function updateFilter() {
+
+const selected \= \[\];
+
+checks.forEach(cb \=> { if (cb.checked) selected.push(parseInt(cb.dataset.fw)); });
+
+if (selected.length \=== 0) { filterOut.innerHTML \= ''; return; }
+
+const needed \= \[\];
+
+DATA.forEach(row \=> {
+
+const applies \= selected.some(fw \=> row\[fw + 1\] !== null);
+
+if (applies) needed.push(row\[0\]);
+
+});
+
+filterOut.innerHTML \= '<strong>You need ' + needed.length + ' capabilities:</strong><br>' +
+
+needed.map(n \=> '<span class="needed">' + n + '</span>').join(' &middot; ');
+
+}
+
+</script\>
+
+</body\>
+
+</html\>

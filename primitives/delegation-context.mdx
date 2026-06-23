@@ -1,0 +1,176 @@
+---
+title: "Delegation Context: Stop Privilege Escalation in Agents"
+sidebarTitle: "Delegation Context"
+description: "CapabilityFence enforces scope-narrowing in multi-agent delegation chains, preventing confused-deputy attacks and privilege escalation."
+---
+
+In a multi-agent system, a supervisor agent delegates work to a worker agent, which may delegate further to a specialist sub-agent. Without explicit enforcement, each step in that chain is an opportunity for privilege escalation: a worker could claim broader authority than its parent ever granted. `CapabilityFence` closes that gap by making scope-narrowing the law — every re-delegation must be a strict subset of the parent's allowed capabilities.
+
+This solves the *confused-deputy problem* in agentic systems: a sub-agent cannot impersonate a more-privileged parent or claim capabilities it was never given, even if the parent is compromised or misbehaves.
+
+## The scope-narrowing rule
+
+A fence created from a delegation token can only grant capabilities that are already present in that token's scope. Attempting to `check` or `guard` a capability outside the allowed list returns `False` or raises `CapabilityDenied` — it never silently passes.
+
+```
+supervisor token: ["read:docs", "write:drafts", "deploy:staging"]
+        │
+        ▼  CapabilityFence.from_delegation_token(token, denied=["deploy:staging"])
+worker fence:     ["read:docs", "write:drafts"]
+        │
+        ▼  worker calls CapabilityFence(allowed=["read:docs"])
+leaf fence:       ["read:docs"]
+```
+
+At each step the scope can only shrink, never grow.
+
+## Install
+
+```bash
+pip install hummbl-governance
+```
+
+## Quick start
+
+`CapabilityFence` supports three usage patterns depending on how much structure you need.
+
+```python
+from hummbl_governance import CapabilityFence, CapabilityDenied
+
+# ── Pattern 1: Direct allow/deny list ──────────────────────────────────────
+fence = CapabilityFence(
+    allowed=["read:docs", "write:drafts"],
+    denied=["deploy:prod", "delete:*"],
+)
+
+if fence.check("write:drafts"):
+    write_draft(content)
+
+# ── Pattern 2: Context manager (raises CapabilityDenied on violation) ──────
+with fence.guard("read:docs"):
+    read_docs()
+
+# ── Pattern 3: Derive from an existing delegation token ────────────────────
+fence_from_tok = CapabilityFence.from_delegation_token(
+    token,
+    denied=["deploy:prod"],
+)
+
+with fence_from_tok.guard("write:drafts"):
+    write_draft(content)
+```
+
+## Constructor
+
+<ParamField path="allowed" type="list[str] | None" default="None">
+  The explicit list of capability strings this fence permits. When `None`, no
+  capabilities are allowed by default — you must provide either `allowed` or
+  construct the fence via `from_delegation_token`.
+</ParamField>
+
+<ParamField path="denied" type="list[str] | None" default="None">
+  An explicit deny list that takes precedence over `allowed`. Supports glob
+  patterns (e.g. `"delete:*"` denies all delete operations regardless of what
+  appears in `allowed`). Use this to add an extra safety layer when you cannot
+  fully enumerate safe operations.
+</ParamField>
+
+<ParamField path="audit_log" type="list[CapabilityAuditEntry] | None" default="None">
+  An optional list that Hummbl appends to on every `check` and `guard` call.
+  Pass a shared list to collect a local capability audit trail within a single
+  agent session, in addition to the entries written to the Governance Bus.
+</ParamField>
+
+## Methods
+
+<ParamField path="check" type="method">
+  **`check(capability: str) -> bool`**
+
+  Returns `True` if `capability` is in `allowed` and not in `denied`. Returns
+  `False` otherwise. Does not raise. Use this when you want to branch on
+  capability without interrupting control flow.
+</ParamField>
+
+<ParamField path="guard" type="method">
+  **`guard(capability: str)` → context manager**
+
+  Returns a context manager that raises `CapabilityDenied` if `capability` is
+  not permitted. Use this to wrap privileged code blocks — the exception acts
+  as a hard stop that cannot be accidentally swallowed by a broad `except`
+  clause.
+</ParamField>
+
+<ParamField path="from_delegation_token" type="classmethod">
+  **`CapabilityFence.from_delegation_token(token: str, denied: list[str] | None = None) -> CapabilityFence`**
+
+  Constructs a fence whose `allowed` set is derived directly from the token's
+  `scope` field. The resulting fence can only be as permissive as the token —
+  it cannot grant capabilities not present in the token. Pass additional
+  `denied` entries to further restrict the fence below the token's scope.
+</ParamField>
+
+## Handling CapabilityDenied
+
+Catch `CapabilityDenied` explicitly — it signals a governance violation, not a routine error, and should be treated differently from a `ValueError` or a network timeout.
+
+```python
+from hummbl_governance import CapabilityFence, CapabilityDenied
+
+fence = CapabilityFence(
+    allowed=["read:docs"],
+    denied=["deploy:prod"],
+)
+
+try:
+    with fence.guard("deploy:prod"):
+        deploy_to_prod()
+except CapabilityDenied as exc:
+    # Log the violation — this is a governance event, not a business error
+    logger.error("capability denied: %s", exc)
+    bus.post(
+        from_id="supervisor",
+        to_id="all",
+        msg_type="CAPABILITY_DENIED",
+        message=str(exc),
+    )
+    raise
+```
+
+## When to use CapabilityFence
+
+<CardGroup cols={2}>
+  <Card title="Supervisor / worker architectures" icon="sitemap">
+    Create a fence for each worker derived from the supervisor's token. Workers
+    can only act within the slice of authority the supervisor explicitly granted.
+  </Card>
+  <Card title="Singapore AI Framework compliance" icon="landmark">
+    CapabilityFence implements the delegation chain depth limits specified in the
+    Singapore Model AI Governance Framework for agentic AI systems.
+  </Card>
+  <Card title="Privilege-escalation prevention" icon="shield-halved">
+    Deny dangerous capabilities (e.g., `deploy:prod`, `delete:*`) explicitly even
+    when delegating broad read/write scopes to untrusted sub-agents.
+  </Card>
+  <Card title="Runtime capability auditing" icon="magnifying-glass">
+    Pass an `audit_log` list to collect a per-session record of every capability
+    check, then attach it to your run report or incident review.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Always construct worker fences using `from_delegation_token` rather than
+  hardcoded `allowed` lists. Hardcoded lists drift out of sync with actual
+  token scopes over time; deriving the fence from the token keeps them
+  automatically aligned.
+</Tip>
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Delegation Tokens" icon="key" href="/primitives/delegation-tokens">
+    Issue the HMAC-signed tokens that CapabilityFence reads its allowed scope from.
+  </Card>
+  <Card title="Governance Bus" icon="scroll" href="/primitives/governance-bus">
+    Capability checks and violations are logged to the bus for audit purposes.
+  </Card>
+</CardGroup>

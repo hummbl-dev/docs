@@ -1,0 +1,103 @@
+---
+title: "AI Governance Compliance: Hummbl Framework Primitives"
+sidebarTitle: "Overview"
+description: "Map Hummbl's governance primitives to EU AI Act, NIST AI RMF, ISO 42001, and more. Build auditable evidence trails that satisfy regulators."
+---
+
+Compliance with AI governance frameworks is not a documentation exercise — it is a runtime enforcement problem. Regulators, auditors, and procurement reviewers do not want to read your policy PDFs; they want to see evidence that controls actually executed at the moment decisions were made. Hummbl's `hummbl-governance` package embeds those controls directly into your agent's execution path, producing verifiable, portable evidence as a natural byproduct of normal operation.
+
+<Warning>
+  Hummbl provides governance infrastructure, not legal advice or compliance certification. Whether your system is subject to any specific framework, and what steps are required to achieve compliance, are legal and regulatory determinations. Engage qualified counsel for your jurisdiction and use case.
+</Warning>
+
+## The Portability Argument
+
+When a DIBCAC assessor, HIPAA auditor, or SOC 2 reviewer evaluates your AI system, they need to verify your evidence chain — not trust a vendor dashboard.
+
+| Evidence lives in… | Assessor can… |
+|--------------------|---------------|
+| Proprietary SaaS dashboard | View screenshots you provide. Cannot run it, grep it, or verify chain of custody. |
+| Local JSONL audit log (Hummbl) | Open it in a text editor, grep for specific events, verify HMAC signatures, take a portable copy. |
+
+Because `hummbl-governance` is a stdlib-only Python library (Apache 2.0), it deploys anywhere your code runs: IL4/IL5 enclaves, air-gapped HIPAA environments, regulated cloud perimeters, and on-premises infrastructure that cannot accept outbound SaaS connections. Your governance evidence stays inside your security boundary.
+
+## Framework Coverage
+
+Hummbl primitives map directly to controls required by the major AI governance frameworks. No separate compliance program is needed per framework — the same runtime primitives satisfy requirements across all of them simultaneously.
+
+| Framework | Status | Primitives That Apply |
+|-----------|--------|-----------------------|
+| [EU AI Act](/compliance/eu-ai-act) | Annex III enforcement expected Dec 2, 2027 | Governance Bus, Kill Switch, Delegation Tokens |
+| [NIST AI RMF](/compliance/nist-ai-rmf) | Voluntary; de facto US standard | Kill Switch (Govern), Bus (Map), Circuit Breaker (Measure), Bus + Kill Switch (Manage) |
+| [ISO 42001:2023](/compliance/iso-42001) | International AI management system standard | Governance Bus, Kill Switch, Delegation Tokens, Circuit Breaker |
+| Colorado SB 24-205 | US state AI law | Governance Bus, Delegation Tokens |
+| Singapore IMDA | Agentic AI Framework | Delegation Context (CapabilityFence), Delegation Tokens |
+| CMMC 2.0 | Level 2 mapping in progress | Governance Bus, Kill Switch |
+| SOC 2 Type II | In planning | Governance Bus (availability + processing integrity) |
+
+### How Each Primitive Addresses Compliance
+
+**Governance Bus → Audit Trail requirements**
+Every action an agent takes is posted to an append-only, HMAC-signed JSONL log. This satisfies EU AI Act Article 12 logging requirements, ISO 42001 incident recording and traceability, NIST AI RMF Manage function documentation, and the availability and processing integrity criteria for SOC 2.
+
+**Kill Switch → Human Oversight requirements**
+A non-delegable halt authority with four escalation modes (`HALT_NONCRITICAL`, `HALT_CRITICAL`, `HALT_ALL`, `EMERGENCY`). Satisfies EU AI Act Article 14 human oversight measures, NIST AI RMF Govern function human control mechanisms, and ISO 42001 operational control.
+
+**Delegation Tokens → Accountability requirements**
+Cryptographic attribution that ties every action back to a specific agent, scope, and authority grant. Satisfies EU AI Act Article 13 transparency requirements, NIST AI RMF Map function risk identification and attribution, and ISO 42001 roles and responsibilities.
+
+**CapabilityFence → Singapore Agentic AI Framework**
+Scope-narrowing enforcement on delegation chains prevents privilege escalation between agent handoffs. Directly addresses Singapore IMDA delegation chain depth limits and identity verification requirements.
+
+**Circuit Breaker → Risk Management requirements**
+Per-adapter failure rate tracking with automatic isolation. Satisfies NIST AI RMF Measure and Manage functions and ISO 42001 risk treatment.
+
+## Free Readiness Assessments
+
+Evaluate your current compliance posture against each framework before you build. All five assessments are interactive, produce instant radar charts, generate shareable results, and require no signup.
+
+<CardGroup cols={2}>
+  <Card title="EU AI Act Assessment" icon="scale-balanced" href="/compliance/eu-ai-act">
+    12 questions across 6 categories covering Articles 9–14. Understand your exposure before Annex III enforcement begins December 2, 2027.
+  </Card>
+  <Card title="NIST AI RMF Assessment" icon="shield-halved" href="/compliance/nist-ai-rmf">
+    12 questions across the four functions: Govern, Map, Measure, and Manage. The de facto US standard, increasingly cited by FTC, SEC, and federal procurement.
+  </Card>
+  <Card title="ISO 42001 Assessment" icon="certificate" href="/compliance/iso-42001">
+    Interactive self-assessment for the international AI management system standard. Increasingly required in enterprise procurement and pairs with SOC 2.
+  </Card>
+  <Card title="Book a Discovery Call" icon="calendar" href="https://cal.com/hummbl/30min">
+    Walk through your specific regulatory obligations with the Hummbl team. We'll map your architecture to the controls you need.
+  </Card>
+</CardGroup>
+
+Additional assessments for **Colorado AI Act** and **Singapore IMDA** (the first interactive tool for the Singapore Agentic AI Framework) are available at [hummbl.io/readiness](https://hummbl.io/readiness).
+
+## Production Evidence
+
+The following metrics come from production deployments of `hummbl-governance` across multi-agent systems operating under live governance enforcement:
+
+| Metric | Result |
+|--------|--------|
+| Automated test coverage | 16,400+ tests |
+| Bus messages processed | 70,000+ with zero data loss |
+| Unauthorized actions in production | 0 (across 12+ concurrent agents) |
+| Policy violations caught and contained | 7 |
+| Mean halt time | Sub-2 seconds |
+
+These numbers are not benchmarks run in isolation — they reflect governance infrastructure operating under real workloads with real agents making real decisions.
+
+<Tip>
+  A single `hummbl-governance` codebase can satisfy ISO 42001, EU AI Act, and NIST AI RMF simultaneously. Organizations running separate compliance programs for each framework typically spend 3–5× more than necessary. Hummbl customers report an estimated **70–90% cost reduction** compared to maintaining independent compliance programs.
+</Tip>
+
+## Air-Gap and Regulated Environment Support
+
+`hummbl-governance` has zero external dependencies — it is pure Python standard library. This means you can deploy it in environments where outbound internet access is prohibited or where third-party SaaS tooling is not permitted:
+
+- **IL4 / IL5 government enclaves** — no dependency on external package mirrors after initial install
+- **Air-gapped HIPAA environments** — audit logs stay on-premises and never leave your security boundary
+- **Regulated financial infrastructure** — no SaaS data residency concerns; logs live wherever you run your code
+- **FedRAMP-bounded systems** — stdlib-only means no unapproved external services
+
+If your compliance obligation requires that evidence never leave a specific network perimeter, a library is the only architectural choice that satisfies that requirement.

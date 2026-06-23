@@ -1,0 +1,146 @@
+---
+title: "Core Concepts: How Hummbl Governance Works"
+sidebarTitle: "Concepts"
+description: "Understand the Governance Tuple, the seven primitives, and the philosophy behind Hummbl's library-first approach to AI agent governance."
+---
+
+Hummbl is built around three ideas: governance belongs in the agent runtime (not a reporting dashboard), every governed decision produces three verifiable records, and libraries that carry no third-party dependencies can be deployed anywhere — including air-gapped and regulated environments. This page explains those ideas in detail and describes the seven primitives that implement them.
+
+## The Governance Tuple
+
+Every governed decision in Hummbl produces exactly three records. Together, these records are called the **Governance Tuple**: CONTRACT × DCT × EVIDENCE.
+
+### CONTRACT
+
+The contract is a human-readable definition of what an agent is permitted to do. It names the allowed operations, the resources the agent may access, and when the permission expires. Contracts are not enforced by Hummbl itself — they are the policy input that you express when you call `create_token`. The token that comes back is the cryptographic encoding of that contract.
+
+```python
+contract = {
+    "ops_allowed": ["read", "summarize"],
+    "resources": ["docs/*"],
+    "expiry": "2026-12-31T23:59:59Z",
+}
+```
+
+### DCT (Delegation Cryptographic Token)
+
+The DCT is a signed, time-bounded token that binds an agent's identity to a contract's scope. `DelegationTokenManager.create_token` produces the DCT. At runtime, `check_least_privilege` verifies that the operation being attempted falls within the token's scope before allowing the call to proceed.
+
+```python
+from hummbl_governance import DelegationTokenManager
+
+dtm = DelegationTokenManager()
+token = dtm.create_token(
+    agent_id="summarizer-agent",
+    scope=["read", "summarize"],
+    ttl=3600,
+    chain_depth=1,
+)
+```
+
+### EVIDENCE
+
+The evidence record is the audit log entry written by `BusWriter` at the moment an action occurs. Evidence records are append-only, structured as JSONL, and include a timestamp, the agent's identity, the message type, and a payload. They capture what the agent was authorized to do (via the DCT) and what it actually did — making the log sufficient for post-incident review and compliance attestation.
+
+```python
+from hummbl_governance import BusWriter
+
+bus = BusWriter(bus_path="governance.jsonl")
+bus.post(
+    from_id="summarizer-agent",
+    to_id="all",
+    msg_type="ACTION",
+    message="read docs/report.md",
+)
+```
+
+<Note>
+  Every agent loop iteration should produce all three elements of the tuple. A CONTRACT without a DCT has no cryptographic binding. A DCT without EVIDENCE has no audit trail. All three together constitute a complete governance record.
+</Note>
+
+## The seven primitives
+
+Hummbl ships seven composable primitives. Use as many or as few as your threat model requires.
+
+| Primitive | Category | What it does | Package |
+|---|---|---|---|
+| **Governance Bus** | Audit | Append-only JSONL audit log. Every agent action writes a structured, timestamped record. | `hummbl-governance` |
+| **Kill Switch** | Control | Hardware-style halt. When engaged, agents check and stop before any action. | `hummbl-governance` |
+| **Delegation Tokens** | Authorization | Scoped, time-bounded tokens. Every operation is verified against the token's scope at runtime. | `hummbl-governance` |
+| **Delegation Context** | Authorization | Tracks multi-agent delegation chains. Attributes downstream actions to the originating principal. | `hummbl-governance` |
+| **Circuit Breaker** | Reliability | Wraps external calls. Opens after a configurable failure threshold; recovers automatically. | `hummbl-governance` |
+| **Base120 Models** | Reasoning | 120 structured reasoning models for agent decision-making. | `hummbl-base120` |
+| **MCP Attestation** | Attestation | Governance for Model Context Protocol servers. Attests tool calls and logs them to the bus. | `@hummbl/mcp-server` |
+
+### Installation
+
+<CodeGroup>
+  ```bash Python governance primitives
+  pip install hummbl-governance
+  ```
+
+  ```bash Base120 reasoning models
+  pip install hummbl-base120
+  ```
+
+  ```bash MCP server (Claude Desktop)
+  npm install -g @hummbl/mcp-server
+  ```
+</CodeGroup>
+
+## Why libraries, not dashboards
+
+Most AI governance products are SaaS dashboards. You send logs to their servers, they store and visualize them, and you download a compliance report. This model has three structural problems for teams operating AI agents in production.
+
+**Assessors need portable evidence.** When a compliance assessor or auditor reviews your AI system, they need records they can examine independently — records that were produced by your system and are under your control. A PDF exported from a vendor dashboard is not independently verifiable. A JSONL file produced by your agent at runtime, containing cryptographically bound delegation records, is.
+
+**Regulated environments cannot run SaaS dashboards.** Defense contractors, federal agencies, healthcare systems, and financial institutions often operate in environments where outbound internet connections are restricted or prohibited. A governance tool that requires a network connection to a vendor's cloud is disqualified before evaluation begins.
+
+**Stdlib-only means no supply chain risk.** Every third-party package you add to a production AI system is a dependency you must audit, approve, and monitor for vulnerabilities. Hummbl's Python packages carry zero runtime dependencies beyond the standard library. There is nothing to audit, nothing to approve, and no transitive vulnerabilities to manage.
+
+## The Library-First Compact
+
+Hummbl commits to the following:
+
+- **Will do:** ship governance as importable libraries with zero runtime dependencies.
+- **Will do:** produce machine-readable evidence records that you own and control.
+- **Will do:** work offline, in air-gapped networks, and inside containers with no egress.
+- **Will do:** publish test counts and pass rates for every release.
+- **Will not do:** require an account, an API key, or a network connection to govern an agent.
+- **Will not do:** add a third-party runtime dependency to the Python packages.
+- **Will not do:** build features that only work when connected to Hummbl's cloud.
+
+## Air-gap and regulated environments
+
+Because `hummbl-governance` and `hummbl-base120` depend only on the Python standard library, they run in any environment that runs Python 3.11 or later:
+
+- Air-gapped government and defense enclaves
+- FedRAMP-boundary cloud environments
+- On-premise Kubernetes clusters with egress firewall rules
+- Edge devices and embedded systems with no outbound connectivity
+- CI/CD pipelines in isolated build environments
+
+Install the packages from an internal PyPI mirror, vendor them directly into your repository, or copy the source. All three approaches work. The governance records your agent produces are local files in your infrastructure — they never leave your environment unless you choose to export them.
+
+## Feature flags
+
+Hummbl's runtime behavior is controlled by environment variables. Set these before importing any `hummbl_governance` modules.
+
+| Variable | Values | Default | Effect |
+|---|---|---|---|
+| `ENABLE_IDP` | `true` / `false` | `false` | Enables the identity provider integration for delegation token signing and verification. Set to `true` for production use. |
+| `BUS_SECURITY_POLICY` | `strict` / `permissive` | `permissive` | In `strict` mode, the governance bus rejects writes that do not include a valid delegation token reference. Recommended for regulated environments. |
+
+```python
+import os
+
+# Set before importing hummbl_governance
+os.environ["ENABLE_IDP"] = "true"
+os.environ["BUS_SECURITY_POLICY"] = "strict"
+
+from hummbl_governance import KillSwitch, BusWriter, DelegationTokenManager
+```
+
+<Warning>
+  Set `ENABLE_IDP` and `BUS_SECURITY_POLICY` before importing any `hummbl_governance` module. Setting them after import has no effect because the library reads these values at import time.
+</Warning>

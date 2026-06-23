@@ -1,0 +1,183 @@
+---
+title: "Circuit Breaker: Isolate External Adapter Failures"
+sidebarTitle: "Circuit Breaker"
+description: "CircuitBreaker wraps external LLM API, vector store, and webhook calls with CLOSED/HALF_OPEN/OPEN state machine logic to prevent cascading failures."
+---
+
+AI agents call external services constantly — LLM APIs, vector stores, webhooks, database connectors. When one of those services degrades or goes down, a naive agent will retry in a tight loop, burning through API quota, racking up costs on paid endpoints, and potentially cascading the failure to every other agent that shares the same adapter. `CircuitBreaker` prevents this by wrapping your external calls in a state machine that fails fast once a failure threshold is crossed, then automatically tests recovery before resuming normal traffic.
+
+## What it prevents
+
+- **Retry storms** — a broken endpoint gets thousands of retries per minute instead of a controlled probe
+- **Cost burns** — paid LLM APIs charge per request, including failed ones; an open circuit stops the bleeding immediately
+- **Cascading timeouts** — a slow database query blocks the thread pool; an open circuit returns immediately so other work can continue
+- **Silent degradation** — all state transitions are logged to the Governance Bus, so you see failures in your audit trail even when they don't raise exceptions to the caller
+
+## State machine
+
+The circuit breaker moves through three states:
+
+```
+                ┌─────────────────────────────────┐
+                │                                 │
+         failure_threshold                  probe succeeds
+         exceeded                                 │
+                │                                 │
+    CLOSED ─────┴──────► OPEN ──────────────► HALF_OPEN
+    (normal)  │         (failing fast)  recovery_timeout  (testing)
+              │                                   │
+              └───────────────────────────────────┘
+                         probe fails → back to OPEN
+```
+
+| State | Behaviour |
+|-------|-----------|
+| `CLOSED` | Normal operation. Every call is forwarded to the wrapped function. Failures increment an internal counter. |
+| `OPEN` | Failing fast. Calls raise immediately without touching the external service. Entered when the failure count reaches `failure_threshold`. |
+| `HALF_OPEN` | Testing recovery. Entered automatically after `recovery_timeout` seconds. The next call is forwarded; success → `CLOSED`, failure → `OPEN`. |
+
+## Install
+
+```bash
+pip install hummbl-governance
+```
+
+## Quick start
+
+```python
+from hummbl_governance import CircuitBreaker, CircuitBreakerState
+
+cb = CircuitBreaker(
+    failure_threshold=5,
+    recovery_timeout=30.0,
+)
+
+# Wrap any callable — the breaker records success or failure automatically
+try:
+    result = cb.call(anthropic_client.messages.create, **params)
+except Exception:
+    result = fallback_handler()
+
+# Inspect state at any time
+if cb.state == CircuitBreakerState.OPEN:
+    logger.warning("anthropic-api breaker is open — %d failures", cb.failure_count)
+```
+
+## Constructor
+
+<ParamField path="failure_threshold" type="int" default="5">
+  Number of consecutive failures required to trip the breaker from `CLOSED` to
+  `OPEN`. Lower values make the breaker more sensitive; higher values tolerate
+  more transient errors before opening. Start with `5` and tune based on your
+  service's observed error rate.
+</ParamField>
+
+<ParamField path="recovery_timeout" type="float" default="30.0">
+  Seconds to wait in `OPEN` state before transitioning to `HALF_OPEN` and
+  probing for recovery. Set this to a value longer than your service's typical
+  restart or rate-limit reset time.
+</ParamField>
+
+<ParamField path="on_state_change" type="Callable | None" default="None">
+  An optional callback invoked on every state transition with the signature
+  `(old_state: CircuitBreakerState, new_state: CircuitBreakerState) -> None`.
+  Use this to trigger alerts, update a status page, or engage the kill switch
+  when a critical adapter fails. See the callback pattern below.
+</ParamField>
+
+## Methods and properties
+
+| Name | Type | Description |
+|------|------|-------------|
+| `call(fn, *args, **kwargs)` | method | Forwards the call to `fn` if `CLOSED` or `HALF_OPEN`. Raises `CircuitBreakerOpen` immediately if `OPEN`. Records the outcome and updates state. |
+| `.state` | property | Returns the current `CircuitBreakerState` enum value: `CLOSED`, `HALF_OPEN`, or `OPEN`. |
+| `.failure_count` | property | Number of consecutive failures recorded since the last reset or successful call. |
+| `.success_count` | property | Total successful calls since the last `reset()`. Useful for health dashboards. |
+| `reset()` | method | Forces the breaker back to `CLOSED` and resets `failure_count` to zero. Use during manual incident recovery or in test teardown. |
+
+## The three states in detail
+
+### CLOSED — normal operation
+
+The breaker starts in `CLOSED`. Every call to `cb.call(fn, ...)` is forwarded to `fn`. A successful return increments `success_count`. An exception increments `failure_count`. When `failure_count` reaches `failure_threshold`, the breaker transitions to `OPEN`.
+
+### OPEN — failing fast
+
+In `OPEN`, calls raise `CircuitBreakerOpen` immediately without forwarding to `fn`. This is intentional: the external service is considered down, and hammering it with retries will not help. Your code should catch `CircuitBreakerOpen` and route to a fallback path.
+
+```python
+from hummbl_governance import CircuitBreaker, CircuitBreakerOpen
+
+cb = CircuitBreaker(failure_threshold=3, recovery_timeout=60.0)
+
+def embed_with_fallback(text: str) -> list[float]:
+    try:
+        return cb.call(openai_client.embeddings.create, input=text, model="text-embedding-3-small")
+    except CircuitBreakerOpen:
+        # Serve from cache or degrade gracefully
+        return cached_embedding(text)
+```
+
+### HALF_OPEN — testing recovery
+
+After `recovery_timeout` seconds, the breaker moves to `HALF_OPEN` automatically. The next call is forwarded as a probe. If the probe succeeds, the breaker returns to `CLOSED`. If it fails, the breaker returns to `OPEN` and resets the timer.
+
+## The on_state_change callback pattern
+
+Use `on_state_change` to connect the circuit breaker to your alerting and escalation logic without coupling the breaker to those systems directly.
+
+```python
+from hummbl_governance import CircuitBreaker, CircuitBreakerState, KillSwitch
+
+ks = KillSwitch(state_dir=Path("_state"))
+
+def on_llm_breaker_change(old: CircuitBreakerState, new: CircuitBreakerState) -> None:
+    if new == CircuitBreakerState.OPEN:
+        # Page the on-call engineer
+        alert_oncall(f"LLM API circuit breaker opened after repeated failures")
+    if new == CircuitBreakerState.CLOSED and old == CircuitBreakerState.HALF_OPEN:
+        logger.info("LLM API recovered — circuit closed")
+
+cb = CircuitBreaker(
+    failure_threshold=5,
+    recovery_timeout=30.0,
+    on_state_change=on_llm_breaker_change,
+)
+```
+
+<Tip>
+  If a critical adapter trips its breaker repeatedly within a short window,
+  consider engaging the kill switch to `HALT_NONCRITICAL`. The circuit breaker
+  protects one adapter; the kill switch protects the whole fleet.
+</Tip>
+
+## Governance Bus integration
+
+Every state transition is written to the Governance Bus automatically as a `CIRCUIT_BREAKER` event. You do not need to call `BusWriter` yourself.
+
+```json
+{
+  "timestamp": "2026-04-05T14:35:22.001Z",
+  "from_id": "circuit-breaker:anthropic-api",
+  "to_id": "all",
+  "msg_type": "CIRCUIT_BREAKER",
+  "message": "state changed CLOSED → OPEN after 5 failures",
+  "metadata": {
+    "failure_count": 5,
+    "recovery_timeout": 30.0
+  }
+}
+```
+
+This means your audit log contains a complete history of every adapter failure, when the breaker opened, how long it stayed open, and when it recovered — without any extra instrumentation on your part.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Kill Switch" icon="power-off" href="/primitives/kill-switch">
+    Escalate from an open breaker to a fleet-wide halt when a critical dependency is down.
+  </Card>
+  <Card title="Governance Bus" icon="scroll" href="/primitives/governance-bus">
+    Query CIRCUIT_BREAKER events to build adapter reliability dashboards.
+  </Card>
+</CardGroup>

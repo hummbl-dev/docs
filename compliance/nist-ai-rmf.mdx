@@ -1,0 +1,119 @@
+---
+title: "NIST AI RMF Alignment with Hummbl Governance Primitives"
+sidebarTitle: "NIST AI RMF"
+description: "Map Hummbl's kill switch, audit bus, and delegation tokens to all four NIST AI RMF functions: Govern, Map, Measure, and Manage. Voluntary but enforced."
+---
+
+The NIST AI Risk Management Framework is voluntary, but it has become the de facto standard for AI risk governance in the United States. The FTC has cited it in AI-related enforcement guidance, the SEC references it in its AI-related disclosure expectations, and federal procurement increasingly requires alignment with its four functions as a condition of contract. Even if you are not legally required to align with NIST AI RMF today, your largest customers — particularly in government, financial services, and healthcare — are likely to start asking for documented alignment in their vendor security reviews. The `hummbl-governance` package maps directly to all four functions: Govern, Map, Measure, and Manage.
+
+<Warning>
+  Hummbl provides governance infrastructure, not legal advice. Whether alignment with NIST AI RMF satisfies a specific contractual, regulatory, or procurement obligation is a determination for your legal and compliance teams.
+</Warning>
+
+## The Four Functions
+
+NIST AI RMF organizes AI risk management around four core functions. Each function represents a different phase of the risk management lifecycle, from establishing accountability structures to actively responding to identified risks.
+
+<CardGroup cols={2}>
+  <Card title="Govern" icon="building-columns">
+    Establish organizational policies, accountability structures, and human oversight mechanisms for AI systems. Govern sets the conditions under which Map, Measure, and Manage operate.
+  </Card>
+  <Card title="Map" icon="map">
+    Identify, categorize, and contextualize AI risks before and during deployment. Map produces the risk inventory that Measure quantifies and Manage addresses.
+  </Card>
+  <Card title="Measure" icon="chart-line">
+    Analyze and assess identified risks using quantitative and qualitative methods. Measure provides the monitoring infrastructure that enables Manage to respond proportionately.
+  </Card>
+  <Card title="Manage" icon="gears">
+    Prioritize and address identified risks through operational controls, incident response, and corrective action. Manage closes the loop between risk identification and resolution.
+  </Card>
+</CardGroup>
+
+## Primitive-to-Function Mapping
+
+Every Hummbl governance primitive maps to one or more NIST AI RMF functions. The table below shows where each primitive fits in the framework and what specific risk management capability it provides.
+
+| Function | Hummbl Primitive | What It Provides |
+|----------|-----------------|------------------|
+| Govern | Kill Switch | Human oversight + non-delegable halt authority over all agent operations |
+| Govern | Delegation Tokens | Cryptographic accountability — every agent action is attributed to a specific authority grant |
+| Map | Governance Bus | Timestamped, signed record of all decisions, actions, and policy checks for risk inventory |
+| Measure | Circuit Breaker | Per-adapter failure rate tracking, threshold enforcement, and automatic isolation metrics |
+| Manage | Kill Switch | Graduated response: `HALT_NONCRITICAL` → `HALT_CRITICAL` → `HALT_ALL` → `EMERGENCY` |
+| Manage | Governance Bus | Immutable incident evidence for post-hoc analysis, corrective action, and audit response |
+
+### Govern: Accountability and Oversight
+
+The Govern function requires that your organization establish clear lines of authority over AI systems and ensure humans can exercise meaningful control. The Kill Switch satisfies this by providing halt authority that no agent can suppress — it runs synchronously in the agent's own execution thread. Delegation Tokens satisfy the accountability dimension by cryptographically binding each agent action to the specific authority grant that permitted it, making it possible to answer "who authorized this?" for any event in your audit log.
+
+### Map: Risk Identification and Contextualization
+
+The Map function requires that you identify what your AI system does, in what contexts, and with what potential for harm. The Governance Bus builds your risk map as a byproduct of normal operations: every decision, every external call, every policy evaluation is posted to the bus with agent identity, timestamp, and event type. When you need to assess risk, you already have a complete record of what actually happened — not a theoretical model of what should have happened.
+
+### Measure: Quantified Risk Assessment
+
+The Measure function requires ongoing monitoring and quantified assessment of identified risks. The Circuit Breaker provides this for every external adapter your agents use. Configure failure rate thresholds per adapter, and the Circuit Breaker tracks actual failure rates in real time, opening automatically when thresholds are exceeded and recording the isolation event to the bus. This gives you quantified, timestamped evidence of adapter reliability — exactly what Measure requires.
+
+### Manage: Incident Response and Corrective Action
+
+The Manage function requires that you prioritize identified risks, respond to incidents, and document corrective actions. The Kill Switch's four escalation modes implement graduated incident response: start with the least disruptive halt mode and escalate only as necessary. Every halt event is recorded to the Governance Bus, creating an immutable incident record that satisfies the documentation requirements for corrective action under both NIST AI RMF and ISO 42001.
+
+## Governed Agent Loop Example
+
+The following example shows a minimal agent loop that satisfies both the Map function (via bus.post) and the Manage function (via ks.check) in a single cohesive pattern. This is the minimum viable governance instrumentation for NIST AI RMF alignment.
+
+```python
+from hummbl_governance import BusWriter, BusEvent, KillSwitch, KillSwitchMode
+
+bus = BusWriter(log_path="./governance.jsonl", signing_key=YOUR_SIGNING_KEY)
+ks = KillSwitch()
+
+def governed_agent_loop(tasks: list[dict]) -> list[dict]:
+    results = []
+
+    for task in tasks:
+        # Manage function: check for halt before each task
+        # This ensures human override takes effect immediately
+        halt_state = ks.check()
+        if halt_state != KillSwitchMode.RUNNING:
+            bus.post(BusEvent(
+                agent_id="task-agent-v1",
+                event_type="halt_observed",
+                payload={"mode": halt_state.value, "pending_tasks": len(tasks)},
+            ))
+            break
+
+        # Map function: record the decision before execution
+        bus.post(BusEvent(
+            agent_id="task-agent-v1",
+            event_type="task_start",
+            payload={"task_id": task["id"], "task_type": task["type"]},
+        ))
+
+        result = execute_task(task)
+
+        # Map function: record the outcome after execution
+        bus.post(BusEvent(
+            agent_id="task-agent-v1",
+            event_type="task_complete",
+            payload={
+                "task_id": task["id"],
+                "outcome": result["status"],
+                "duration_ms": result["duration_ms"],
+            },
+        ))
+
+        results.append(result)
+
+    return results
+```
+
+This loop gives you a complete, timestamped record of every task your agent attempted, every task it completed, every halt it observed, and the state of the system when each event occurred. That record is your Map evidence. The kill switch check on every iteration is your Manage and Govern evidence.
+
+<Note>
+  Hummbl provides a free 12-question NIST AI RMF readiness assessment at [hummbl.io/readiness/nist](https://hummbl.io/readiness/nist). It covers all four functions, produces an instant radar chart of your alignment posture across Govern, Map, Measure, and Manage, and requires no signup.
+</Note>
+
+<Tip>
+  Because the same `BusWriter`, `KillSwitch`, `DelegationToken`, and `CircuitBreaker` primitives also satisfy EU AI Act Articles 9–14 and ISO 42001 clauses 6.1, 7.5, 8.4, 9.1, and 10.2, you can achieve multi-framework alignment with a single instrumentation pass. Organizations that run separate compliance programs per framework typically spend 3–5× more. See the [compliance overview](/compliance/overview) for the full cross-framework mapping.
+</Tip>

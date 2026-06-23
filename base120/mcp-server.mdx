@@ -1,0 +1,156 @@
+---
+title: "Base120 MCP Server for Claude Desktop and AI Agents"
+sidebarTitle: "MCP Server"
+description: "Install the Hummbl MCP server to give Claude Desktop and other MCP clients direct access to all 120 mental models and reasoning tools."
+---
+
+The Hummbl MCP server exposes all 120 Base120 mental models — plus reasoning tools, structured resources, and a ready-made problem decomposition prompt — to any MCP-compatible client. Connect it to Claude Desktop and Claude can select models, apply transformations, and run full six-family analyses on any problem you describe, all without you writing a single line of Python.
+
+## Install the MCP Server
+
+You have two options: install the npm package globally, or use the MCP server that ships bundled with the `hummbl-base120` Python package.
+
+<Tabs>
+  <Tab title="npm (recommended)">
+    Install the server globally with npm. This is the fastest path if you already have Node.js installed.
+
+    ```bash
+    npm install -g @hummbl/mcp-server
+    ```
+
+    Then use `npx` to invoke it in your Claude Desktop config (no path resolution needed).
+  </Tab>
+  <Tab title="Python (bundled)">
+    If you have `hummbl-base120` installed, you already have an MCP server — no additional install required.
+
+    ```bash
+    pip install hummbl-base120
+    ```
+
+    Invoke it with `python -m hummbl_base120.mcp_server`.
+  </Tab>
+</Tabs>
+
+---
+
+## Set Up Claude Desktop
+
+<Steps>
+  <Step title="Install the MCP server">
+    Choose your preferred install method from the options above and confirm it completes without errors.
+
+    ```bash
+    # npm
+    npm install -g @hummbl/mcp-server
+
+    # or Python
+    pip install hummbl-base120
+    ```
+  </Step>
+
+  <Step title="Locate your Claude Desktop config file">
+    Claude Desktop reads MCP server configuration from a JSON file on your local machine.
+
+    | Platform | Path |
+    |----------|------|
+    | macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+    | Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
+
+    Create the file if it doesn't exist yet. The directory will already be present once you've installed Claude Desktop.
+  </Step>
+
+  <Step title="Add the Hummbl MCP server configuration">
+    Open `claude_desktop_config.json` and add the `hummbl` entry to the `mcpServers` object. Choose the block that matches your install method.
+
+    <CodeGroup>
+
+    ```json npm
+    {
+      "mcpServers": {
+        "hummbl": {
+          "command": "npx",
+          "args": ["@hummbl/mcp-server"]
+        }
+      }
+    }
+    ```
+
+    ```json Python (bundled)
+    {
+      "mcpServers": {
+        "hummbl": {
+          "command": "python",
+          "args": ["-m", "hummbl_base120.mcp_server"]
+        }
+      }
+    }
+    ```
+
+    </CodeGroup>
+
+    If `mcpServers` already exists in your config, add `"hummbl"` as a new key inside it alongside your existing servers.
+  </Step>
+
+  <Step title="Restart Claude Desktop">
+    Fully quit Claude Desktop (don't just close the window — use Quit from the menu or system tray) and relaunch it. Claude reads MCP config at startup.
+  </Step>
+
+  <Step title="Verify the connection">
+    In a new Claude conversation, type:
+
+    > List all Base120 transformation families.
+
+    Claude should respond with the six families (P, IN, CO, DE, RE, SY) and their descriptions, drawn directly from the MCP server. If you see that, the integration is working.
+  </Step>
+</Steps>
+
+---
+
+## Available MCP Tools
+
+The MCP server exposes three tools that Claude can call during a conversation.
+
+| Tool | Description |
+|------|-------------|
+| `select_model` | Fetch a specific mental model by its code (e.g. `P1`, `DE7`). Returns the full model including definition, usage, examples, and related models. |
+| `apply_transformation` | Apply a transformation family to a problem statement. The server auto-selects the best-fit model and returns a structured reframing. |
+| `analyze_problem` | Run a full multi-model analysis of a problem using all six transformation families simultaneously. |
+
+<Tip>
+  Use `analyze_problem` when you want a comprehensive view of a problem. It runs all six transformations at once and returns a coordinated analysis — equivalent to calling `apply_transformation` six times and synthesizing the results in a single step.
+</Tip>
+
+---
+
+## Available MCP Resources
+
+MCP resources are structured data sources Claude can read directly. The Hummbl server exposes four resources.
+
+- **`models://all`** — The complete catalog of all 120 mental models with full fields.
+- **`models://by-transformation`** — All 120 models grouped by their transformation family. Useful for browsing or selecting within a family.
+- **`relationships://all`** — Validated relationships between models, describing how models connect and complement each other.
+- **`transformations://overview`** — A structured overview of all six transformation families with descriptions and example use cases.
+
+---
+
+## Available MCP Prompts
+
+The Hummbl MCP server includes one built-in prompt template.
+
+**`problem_decomposition`** — A systematic six-transformation problem analysis framework. Invoke this prompt to walk through a problem methodically, applying each of the six transformation families in sequence and synthesizing the results into a structured output.
+
+---
+
+## Troubleshooting
+
+**Claude doesn't see the Hummbl tools after restarting.**
+
+Check that your JSON config is valid — a trailing comma or missing brace will silently break the config. Paste the file contents into a JSON validator. Then confirm the command you're using (`npx` or `python`) is on your system's `PATH` by running it in a terminal.
+
+**`npx` times out on first use.**
+
+The first invocation of `npx @hummbl/mcp-server` may take a few seconds to resolve the package from the npm registry. If it continues to fail, try installing globally first with `npm install -g @hummbl/mcp-server` and confirm the install succeeds before re-adding the config.
+
+**The Python server exits immediately.**
+
+Confirm `hummbl-base120` is installed in the same Python environment that your shell's `python` command resolves to. Run `python -m hummbl_base120 get P1` in a terminal — if that works, the MCP server will too.

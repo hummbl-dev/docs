@@ -1,0 +1,227 @@
+---
+title: "Base120 REST API Reference — api.hummbl.io"
+sidebarTitle: "REST API"
+description: "Use the Base120 REST API at api.hummbl.io to fetch mental models, get recommendations for any problem, and check API health. No authentication required."
+---
+
+The Base120 REST API lets you fetch mental models, request recommendations for any problem, and inspect API health over plain HTTP — no authentication, no SDK required. Any language or tool that can make an HTTP request can use it.
+
+## Base URL
+
+```bash
+https://api.hummbl.io
+```
+
+## Authentication
+
+No authentication is required during the beta period. All endpoints are open by IP address.
+
+## Rate Limits
+
+| Limit | Value |
+|-------|-------|
+| Requests per minute | 100 per IP |
+| Window | 60-second sliding window |
+| Response on exceed | `429 Too Many Requests` |
+
+When you hit the rate limit, wait until your 60-second window resets before retrying. The `Retry-After` header in the 429 response tells you how many seconds to wait.
+
+---
+
+## Endpoints
+
+### GET /health
+
+Check that the API is up and inspect its current configuration. Use this endpoint to verify connectivity before running a batch of requests.
+
+```bash
+curl https://api.hummbl.io/health
+```
+
+```json
+{
+  "status": "ok",
+  "version": "1.0.0",
+  "timestamp": "2026-04-14T09:32:11Z",
+  "models_count": 120,
+  "rate_limit_status": {
+    "limit": 100,
+    "window": "60s"
+  },
+  "security": {
+    "auth_required": false,
+    "mode": "beta"
+  }
+}
+```
+
+---
+
+### GET /v1/models
+
+Return all 120 mental models. Each entry in the response includes the model's code, name, definition, and priority ordering within its transformation family.
+
+```bash
+curl https://api.hummbl.io/v1/models
+```
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "code": "P1",
+      "name": "First Principles Framing",
+      "definition": "Break a problem down to its most fundamental truths and rebuild understanding from the ground up.",
+      "priority": 1
+    },
+    {
+      "code": "P2",
+      "name": "...",
+      "definition": "...",
+      "priority": 2
+    }
+  ]
+}
+```
+
+The array contains all 120 models in priority order within each transformation family. To retrieve full model details including usage guidance, worked examples, and related model codes, fetch the individual model with `GET /v1/models/:code`.
+
+---
+
+### GET /v1/models/:code
+
+Fetch a single model by its code. Returns the model's code, name, definition, and priority. If the code does not match any of the 120 models, the API returns a `404`.
+
+```bash
+curl https://api.hummbl.io/v1/models/P1
+```
+
+```json
+{
+  "success": true,
+  "data": {
+    "code": "P1",
+    "name": "First Principles Framing",
+    "definition": "Break a problem down to its most fundamental truths and rebuild understanding from the ground up.",
+    "priority": 1
+  }
+}
+```
+
+If the code does not match any of the 120 models, the API returns a `404` with an error body:
+
+```json
+{
+  "success": false,
+  "error": "Model 'XX99' not found."
+}
+```
+
+---
+
+### POST /v1/recommend
+
+Given a free-text problem, return the most relevant mental models ranked by relevance score. Send a JSON body with your `problem` string.
+
+```bash
+curl -X POST https://api.hummbl.io/v1/recommend \
+  -H "Content-Type: application/json" \
+  -d '{"problem": "How do I prioritize features for my MVP?"}'
+```
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "model_code": "DE7",
+      "model_name": "Pareto Decomposition",
+      "transformation": "DE",
+      "score": 0.87,
+      "reason": "Focus on the 20% of features delivering 80% of value."
+    },
+    {
+      "model_code": "P6",
+      "model_name": "Point-of-View Anchoring",
+      "transformation": "P",
+      "score": 0.74,
+      "reason": "Define whose MVP this is before prioritizing."
+    },
+    {
+      "model_code": "IN17",
+      "model_name": "Counterfactual Negation",
+      "transformation": "IN",
+      "score": 0.71,
+      "reason": "Ask what a bad MVP would look like, then invert."
+    }
+  ],
+  "meta": {
+    "matchedPatterns": ["prioritization", "scoping", "mvp"],
+    "keywordsAnalyzed": ["prioritize", "features", "mvp"]
+  }
+}
+```
+
+The `meta` object shows which patterns and keywords the recommendation engine matched against, so you can understand why specific models were surfaced.
+
+**Request body fields:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `problem` | `string` | Yes | Free-text description of the problem or question |
+
+---
+
+## Error Handling
+
+All error responses use the same shape: `{"success": false, "error": "Error description"}`.
+
+| Status | Meaning |
+|--------|---------|
+| `200` | Success |
+| `400` | Bad request — invalid or missing parameters |
+| `404` | Not found — resource does not exist |
+| `429` | Rate limited — too many requests; check `Retry-After` header |
+| `500` | Server error — unexpected internal failure |
+
+```json
+{
+  "success": false,
+  "error": "The 'problem' field is required."
+}
+```
+
+---
+
+## JavaScript Example
+
+Here's a minimal fetch example you can drop into any JavaScript environment to get model recommendations.
+
+```javascript
+async function recommendModels(problem) {
+  const response = await fetch("https://api.hummbl.io/v1/recommend", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ problem }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error);
+  }
+
+  const { data } = await response.json();
+  return data;
+}
+
+// Example usage
+const recs = await recommendModels("How do I reduce churn in my SaaS product?");
+for (const r of recs) {
+  console.log(`${r.model_code}: ${r.model_name} (score=${r.score})`);
+}
+```
+
+<Note>
+  The REST API returns a flat representation of each model. If you need the full `Model` object — including `examples` and `related` arrays — fetch the individual model with `GET /v1/models/:code` after receiving recommendations, or use the [Python SDK](/base120/sdk-reference) which returns fully hydrated `Model` objects directly from `Engine.recommend()`.
+</Note>

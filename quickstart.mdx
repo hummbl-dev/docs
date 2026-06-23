@@ -1,0 +1,276 @@
+---
+title: "Get Started with Hummbl Governance in 5 Minutes"
+sidebarTitle: "Quickstart"
+description: "Install hummbl-governance and wire a kill switch, delegation token, and audit log into your AI agent in under 5 minutes. No accounts required."
+---
+
+In the next five minutes you will install `hummbl-governance`, wire a kill switch that can halt your agent at any time, issue a scoped delegation token that defines what your agent is allowed to do, log every action to a tamper-evident audit trail, and wrap an external call in a circuit breaker. When you are done, you will have a fully governed agent and a JSONL audit log you can inspect immediately — no account sign-up, no network calls to Hummbl servers, no configuration files.
+
+<Steps>
+  <Step title="Install hummbl-governance">
+    Install the package from PyPI. Python 3.11 or later is required. The library has zero third-party runtime dependencies — only the Python standard library.
+
+    ```bash
+    pip install hummbl-governance
+    ```
+
+    If you also want the 120 structured reasoning models, install the companion package:
+
+    ```bash
+    pip install hummbl-base120
+    ```
+
+    <Note>
+      Both packages are Apache 2.0 licensed and fully open source. `hummbl-governance` ships with 546 tests; `hummbl-base120` ships with 148 tests.
+    </Note>
+  </Step>
+
+  <Step title="Wire the kill switch first">
+    The kill switch is the first thing your agent checks on every run. If it is engaged, the agent stops before taking any action. Always wire it before any business logic.
+
+    ```python
+    import os
+    from pathlib import Path
+    from hummbl_governance import KillSwitch
+
+    os.environ["ENABLE_IDP"] = "true"
+
+    state = Path("_state")
+    state.mkdir(exist_ok=True)
+
+    ks = KillSwitch(state_dir=state)
+    if ks.engaged():
+        raise SystemExit(f"kill switch active: {ks.get_status()}")
+    ```
+
+    The kill switch reads from a local state directory. To engage it from another process or script, write the appropriate state file into `_state/`. You can also check `ks.engaged()` at any point in your loop to halt mid-run.
+  </Step>
+
+  <Step title="Issue a delegation token">
+    Delegation tokens define exactly what your agent is allowed to do. Every operation is checked against the token's scope at runtime — if the scope does not cover an operation, the check fails and you log a denial.
+
+    ```python
+    from hummbl_governance import DelegationTokenManager
+
+    mgr = DelegationTokenManager()
+    token = mgr.create_token(
+        agent_id="research-agent-1",
+        scope=["read:web", "write:drafts"],
+        ttl=3600,       # seconds until expiry
+        chain_depth=1,  # how many sub-agents may re-delegate
+    )
+    ```
+
+    Before every operation, check that the token covers it:
+
+    ```python
+    if not mgr.check_least_privilege(token, op="read:web"):
+        # log the denial and skip — do not proceed
+        print("denied: token does not cover read:web")
+    ```
+
+    <Tip>
+      Keep `ttl` short (minutes to hours) and `chain_depth` at zero unless you specifically need sub-agent delegation. This limits blast radius if a token is misused.
+    </Tip>
+  </Step>
+
+  <Step title="Log every action to the governance bus">
+    The governance bus is an append-only JSONL file that records every action your agent takes. Write a record for approvals, denials, errors, and receipts — not just the happy path.
+
+    ```python
+    from hummbl_governance import BusWriter
+
+    bus = BusWriter(bus_path=state / "governance_bus.jsonl")
+
+    # Log an action before you take it
+    bus.post(
+        from_id="research-agent-1",
+        to_id="all",
+        msg_type="ACTION",
+        message="fetching https://api.hummbl.io/health",
+    )
+
+    # Log the outcome
+    bus.post(
+        from_id="research-agent-1",
+        to_id="all",
+        msg_type="RECEIPT",
+        message="fetched https://api.hummbl.io/health",
+    )
+
+    # Log a denial
+    bus.post(
+        from_id="research-agent-1",
+        to_id="all",
+        msg_type="DENIED",
+        message="no scope for write:prod",
+    )
+
+    # Log an error
+    bus.post(
+        from_id="research-agent-1",
+        to_id="all",
+        msg_type="ERROR",
+        message="connection timed out: https://example.com",
+    )
+    ```
+
+    Each entry is a timestamped JSON object. You can tail the log during development:
+
+    ```bash
+    tail -f _state/governance_bus.jsonl | python -m json.tool
+    ```
+  </Step>
+
+  <Step title="Wrap external calls in a circuit breaker">
+    The circuit breaker stops your agent from hammering a failing service. After `failure_threshold` consecutive failures it opens the circuit; after `recovery_timeout` seconds it allows one probe call through.
+
+    ```python
+    from hummbl_governance import CircuitBreaker
+    import urllib.request
+
+    cb = CircuitBreaker(failure_threshold=3, recovery_timeout=60.0)
+
+    def fetch_page(url: str) -> str:
+        with urllib.request.urlopen(url, timeout=10) as r:
+            return r.read().decode()
+
+    try:
+        result = cb.call(fetch_page, "https://api.hummbl.io/health")
+        bus.post(
+            from_id="research-agent-1",
+            to_id="all",
+            msg_type="RECEIPT",
+            message=f"fetched health endpoint ({len(result)} bytes)",
+        )
+    except Exception as e:
+        bus.post(
+            from_id="research-agent-1",
+            to_id="all",
+            msg_type="ERROR",
+            message=f"circuit breaker caught: {e}",
+        )
+    ```
+  </Step>
+</Steps>
+
+## Full working example
+
+Save the following as `governed_agent.py` and run it with `python governed_agent.py`. It combines all five steps into a complete governed agent loop.
+
+```python
+# governed_agent.py
+# pip install hummbl-governance
+
+import os
+from pathlib import Path
+from hummbl_governance import (
+    KillSwitch,
+    DelegationTokenManager,
+    BusWriter,
+    CircuitBreaker,
+)
+
+os.environ["ENABLE_IDP"] = "true"
+
+state = Path("_state")
+state.mkdir(exist_ok=True)
+
+# 1. Wire the kill switch first
+ks = KillSwitch(state_dir=state)
+if ks.engaged():
+    raise SystemExit(f"kill switch active: {ks.get_status()}")
+
+# 2. Issue a delegation token
+mgr = DelegationTokenManager()
+token = mgr.create_token(
+    agent_id="research-agent-1",
+    scope=["read:web", "write:drafts"],
+    ttl=3600,
+    chain_depth=1,
+)
+
+# 3. Open the governance bus
+bus = BusWriter(bus_path=state / "governance_bus.jsonl")
+
+# 4. Wrap external calls in a circuit breaker
+cb = CircuitBreaker(failure_threshold=3, recovery_timeout=60.0)
+
+def fetch_page(url: str) -> str:
+    import urllib.request
+    with urllib.request.urlopen(url, timeout=10) as r:
+        return r.read().decode()
+
+tasks = ["https://api.hummbl.io/health"]
+
+for url in tasks:
+    if ks.engaged():
+        bus.post(
+            from_id="research-agent-1",
+            to_id="all",
+            msg_type="HALT",
+            message=f"kill switch engaged mid-run: {url}",
+        )
+        break
+    if not mgr.check_least_privilege(token, op="read:web"):
+        bus.post(
+            from_id="research-agent-1",
+            to_id="all",
+            msg_type="DENIED",
+            message=f"no scope for read:web — skipping {url}",
+        )
+        continue
+    bus.post(
+        from_id="research-agent-1",
+        to_id="all",
+        msg_type="ACTION",
+        message=f"fetching {url}",
+    )
+    try:
+        result = cb.call(fetch_page, url)
+        bus.post(
+            from_id="research-agent-1",
+            to_id="all",
+            msg_type="RECEIPT",
+            message=f"fetched {url} ({len(result)} bytes)",
+        )
+    except Exception as e:
+        bus.post(
+            from_id="research-agent-1",
+            to_id="all",
+            msg_type="ERROR",
+            message=f"failed {url}: {e}",
+        )
+
+print(f"Audit log written to: {state / 'governance_bus.jsonl'}")
+```
+
+## What just happened
+
+When you ran `governed_agent.py`, each primitive played a specific role:
+
+| Primitive | What it did |
+|---|---|
+| **KillSwitch** | Checked a local state file before any work began. If you had engaged the switch, the agent would have exited immediately with a reason code. |
+| **DelegationTokenManager** | Issued a signed token scoping the agent to `read:web` and `write:drafts` for one hour. `check_least_privilege` enforced that scope on each operation. |
+| **BusWriter** | Appended a structured JSON record to `_state/governance_bus.jsonl` for every action, denial, receipt, and error. |
+| **CircuitBreaker** | Counted consecutive failures against the external URL. After three failures it would have opened the circuit and prevented further calls for 60 seconds. |
+
+Together, these four primitives produce the Governance Tuple — CONTRACT (the token's scope), DCT (the signed delegation), and EVIDENCE (the bus log) — for every iteration of the agent loop.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Governance Primitives" icon="shield-check" href="/primitives/governance-bus">
+    Deep dive into all seven primitives: bus, kill switch, tokens, context, circuit breaker, Base120, and MCP attestation.
+  </Card>
+  <Card title="Base120 Models" icon="brain" href="/base120/overview">
+    Add 120 structured reasoning models to your agent's decision-making layer.
+  </Card>
+  <Card title="Compliance Readiness" icon="clipboard-check" href="/compliance/overview">
+    Map your governance records to NIST AI RMF, ISO 42001, EU AI Act, SOC 2, and CMMC controls.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/overview">
+    Explore the REST API at `https://api.hummbl.io` — no auth required, 100 req/min per IP.
+  </Card>
+</CardGroup>

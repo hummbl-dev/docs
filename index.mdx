@@ -1,0 +1,101 @@
+---
+title: "Hummbl: AI Governance Infrastructure as Libraries"
+sidebarTitle: "Home"
+description: "Hummbl provides stdlib-only Python libraries for governing AI agents — kill switches, audit logs, delegation tokens, and 120 reasoning models. Zero runtime dependencies."
+---
+
+Hummbl is open-source AI governance infrastructure shipped as importable Python libraries. Instead of a SaaS dashboard you connect to after the fact, Hummbl gives you kill switches, audit logs, delegation tokens, and circuit breakers that live directly inside your agent runtime — no accounts, no external services, no third-party dependencies.
+
+<CardGroup cols={2}>
+  <Card title="Introduction" icon="house" href="/introduction">
+    Learn what Hummbl is, why governance belongs in the runtime, and how the Governance Tuple works.
+  </Card>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Wire a kill switch, delegation token, and audit log into your agent in under 5 minutes.
+  </Card>
+  <Card title="Core Concepts" icon="book-open" href="/concepts">
+    Understand the Governance Tuple, the seven primitives, and the library-first philosophy.
+  </Card>
+  <Card title="Governance Primitives" icon="shield-check" href="/primitives/governance-bus">
+    Explore the kill switch, governance bus, delegation tokens, circuit breaker, and more.
+  </Card>
+  <Card title="Base120 Models" icon="brain" href="/base120/overview">
+    120 reasoning models for structured agent decision-making, shipped as a stdlib-only library.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/overview">
+    REST API at `https://api.hummbl.io` — no auth required, 100 req/min per IP.
+  </Card>
+  <Card title="Compliance Readiness" icon="clipboard-check" href="/compliance/overview">
+    Framework coverage for NIST AI RMF, ISO 42001, EU AI Act, SOC 2, CMMC, and more.
+  </Card>
+  <Card title="Arbiter CLI" icon="terminal" href="/tools/arbiter">
+    Score, analyze, and diff agent repositories for governance readiness from the command line.
+  </Card>
+</CardGroup>
+
+## Get up and running
+
+The following steps take you from a fresh environment to a fully governed agent with an audit trail, a kill switch, and scoped delegation tokens.
+
+<Steps>
+  <Step title="Install the library">
+    Install `hummbl-governance` from PyPI. Python 3.11 or later is required. No third-party packages are pulled in.
+
+    ```bash
+    pip install hummbl-governance
+    ```
+  </Step>
+  <Step title="Wire the kill switch first">
+    The kill switch is the first thing your agent checks on every run. If it is engaged, the agent halts before taking any action.
+
+    ```python
+    from pathlib import Path
+    from hummbl_governance import KillSwitch
+
+    state = Path("_state")
+    state.mkdir(exist_ok=True)
+
+    ks = KillSwitch(state_dir=state)
+    if ks.engaged():
+        raise SystemExit(f"kill switch active: {ks.get_status()}")
+    ```
+  </Step>
+  <Step title="Issue a delegation token">
+    Delegation tokens define exactly what your agent is allowed to do. Every operation is checked against the token's scope before it executes.
+
+    ```python
+    import os
+    os.environ["ENABLE_IDP"] = "true"
+
+    from hummbl_governance import DelegationTokenManager
+
+    mgr = DelegationTokenManager()
+    token = mgr.create_token(
+        agent_id="research-agent-1",
+        scope=["read:web", "write:drafts"],
+        ttl=3600,
+        chain_depth=1,
+    )
+    ```
+  </Step>
+  <Step title="Log every action to the governance bus">
+    The governance bus is your tamper-evident audit log. Write a record for every action your agent takes — approvals, denials, errors, and receipts.
+
+    ```python
+    from hummbl_governance import BusWriter
+
+    bus = BusWriter(bus_path=state / "governance_bus.jsonl")
+
+    bus.post(
+        from_id="research-agent-1",
+        to_id="all",
+        msg_type="ACTION",
+        message="fetching https://api.hummbl.io/health",
+    )
+    ```
+  </Step>
+</Steps>
+
+<Note>
+  `hummbl-governance` and `hummbl-base120` have **zero third-party runtime dependencies** — they rely entirely on the Python standard library. This means you can deploy them in air-gapped environments, government enclaves, and strict supply-chain contexts without any additional review or approval.
+</Note>

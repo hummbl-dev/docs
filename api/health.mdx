@@ -1,0 +1,110 @@
+---
+title: "GET /health — Check Base120 API Status"
+sidebarTitle: "Health"
+description: "GET /health returns the current status of the Hummbl Base120 API, including version, model count, and rate limit status."
+---
+
+The health endpoint gives you a real-time snapshot of the Base120 API's operational state. Use it for uptime monitoring, integration pre-flight checks, and confirming that the full library of 120 models is loaded before you start sending requests. It returns no sensitive data and counts against your rate limit, so polling it more than necessary is not recommended.
+
+## Request
+
+```bash
+curl https://api.hummbl.io/health
+```
+
+## Response — 200 OK
+
+```json
+{
+  "status": "healthy",
+  "version": "1.0.0",
+  "timestamp": "2026-02-25T16:00:26.510Z",
+  "models_count": 120,
+  "rate_limit_status": {
+    "active_ips": 1,
+    "window_ms": 60000,
+    "max_requests_per_minute": 100
+  },
+  "security": {
+    "total_events": 0,
+    "recent_critical": 0,
+    "by_severity": {}
+  }
+}
+```
+
+## Response fields
+
+<ResponseField name="status" type="string">
+  Current operational state of the API. `"healthy"` means all systems are running normally. Any other value indicates a degraded or error state.
+</ResponseField>
+
+<ResponseField name="version" type="string">
+  The deployed API version, following semantic versioning (e.g. `"1.0.0"`).
+</ResponseField>
+
+<ResponseField name="timestamp" type="string">
+  ISO 8601 timestamp of when the health check was evaluated, in UTC (e.g. `"2026-02-25T16:00:26.510Z"`).
+</ResponseField>
+
+<ResponseField name="models_count" type="integer">
+  Number of mental models currently loaded. This should always be `120`. If you see a different value, the model library may not have initialised correctly.
+</ResponseField>
+
+<ResponseField name="rate_limit_status" type="object">
+  Current state of the rate limiter across all active IP addresses.
+
+  <Expandable title="rate_limit_status fields">
+    <ResponseField name="active_ips" type="integer">
+      Number of distinct IP addresses that have made at least one request within the current sliding window.
+    </ResponseField>
+    <ResponseField name="window_ms" type="integer">
+      Length of the sliding rate-limit window in milliseconds. Currently `60000` (60 seconds).
+    </ResponseField>
+    <ResponseField name="max_requests_per_minute" type="integer">
+      Maximum number of requests allowed per IP address per window. Currently `100`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="security" type="object">
+  Summary of security events recorded by the API's input validation layer.
+
+  <Expandable title="security fields">
+    <ResponseField name="total_events" type="integer">
+      Total number of security events recorded since the last deployment. A value of `0` means no anomalous inputs have been detected.
+    </ResponseField>
+    <ResponseField name="recent_critical" type="integer">
+      Number of critical-severity security events in the recent window. A non-zero value warrants investigation.
+    </ResponseField>
+    <ResponseField name="by_severity" type="object">
+      Breakdown of events keyed by severity level (e.g. `"low"`, `"medium"`, `"critical"`). Empty `{}` when no events have been recorded.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Using health as a pre-flight check
+
+Before your application starts sending model or recommendation requests, call `/health` and verify two things: `status` equals `"healthy"` and `models_count` equals `120`. If either condition fails, surface the error to your operator rather than proceeding — downstream calls will likely fail or return incomplete results.
+
+```python
+import urllib.request, json, sys
+
+def preflight_check():
+    url = "https://api.hummbl.io/health"
+    with urllib.request.urlopen(url) as r:
+        health = json.loads(r.read())
+
+    if health["status"] != "healthy":
+        sys.exit(f"API is not healthy: {health['status']}")
+    if health["models_count"] != 120:
+        sys.exit(f"Unexpected model count: {health['models_count']}")
+
+    print("Pre-flight check passed — API is ready.")
+
+preflight_check()
+```
+
+<Note>
+  For full details on rate limits — including the 60-second sliding window and the `429 Too Many Requests` response format — see the [API Overview](/api/overview).
+</Note>

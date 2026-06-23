@@ -1,0 +1,315 @@
+---
+title: "hummbl-base120 Python SDK Reference"
+sidebarTitle: "SDK Reference"
+description: "Complete API reference for hummbl-base120: Engine.select, Engine.apply, Engine.recommend, the Model class, the Krineia Ledger, and CLI commands."
+---
+
+The `hummbl-base120` Python package gives you programmatic access to all 120 Base120 mental models and the full Engine API. It requires Python 3.11 or later, depends only on the standard library, ships air-gap ready, and is covered by 148 tests.
+
+## Installation
+
+```bash
+pip install hummbl-base120
+```
+
+Once installed, import the `Engine` class to start selecting and applying mental models.
+
+```python
+from hummbl_base120 import Engine
+```
+
+---
+
+## Engine API
+
+### Engine.select()
+
+Fetch a single model by its code. Use this when you know exactly which mental model you want to apply.
+
+```python
+Engine.select(code: str) -> Model
+```
+
+<ParamField path="code" type="str" required>
+  The model's unique code, e.g. `"P1"`, `"IN6"`, or `"DE7"`. Codes are case-sensitive and always uppercase.
+</ParamField>
+
+```python
+from hummbl_base120 import Engine
+
+model = Engine.select("P1")
+print(model.name)        # "First Principles Framing"
+print(model.definition)  # "Break a problem down to its most fundamental..."
+print(model.usage)       # "Use when inherited assumptions are blocking..."
+```
+
+<Note>
+  `Engine.select()` raises `ModelNotFoundError` if the code does not match any of the 120 models. Catch it with `from hummbl_base120 import ModelNotFoundError`.
+</Note>
+
+---
+
+### Engine.list()
+
+Return all 120 models, or filter to a single transformation family. Use this to enumerate available models or to build a picker UI.
+
+```python
+Engine.list(transformation: str | None = None) -> list[Model]
+```
+
+<ParamField path="transformation" type="str">
+  Optional. One of `"P"`, `"IN"`, `"CO"`, `"DE"`, `"RE"`, or `"SY"`. When omitted, all 120 models are returned.
+</ParamField>
+
+```python
+from hummbl_base120 import Engine
+
+# List all Decomposition models
+de_models = Engine.list(transformation="DE")
+for m in de_models:
+    print(m.code, m.name)
+# DE1  Root Cause Analysis
+# DE2  ...
+
+# List all 120 models
+all_models = Engine.list()
+print(len(all_models))  # 120
+```
+
+---
+
+### Engine.apply()
+
+Apply a transformation family to a problem statement. The engine selects the best-fit model within the family (or uses the one you specify) and returns a structured reframing.
+
+```python
+Engine.apply(
+    problem: str,
+    transformation: str,
+    model_code: str | None = None,
+) -> TransformationResult
+```
+
+<ParamField path="problem" type="str" required>
+  A free-text description of the problem you want to reason about.
+</ParamField>
+
+<ParamField path="transformation" type="str" required>
+  The transformation family to apply: `"P"`, `"IN"`, `"CO"`, `"DE"`, `"RE"`, or `"SY"`.
+</ParamField>
+
+<ParamField path="model_code" type="str">
+  Optional. A specific model code to force, e.g. `"DE7"`. When omitted, the engine auto-selects the best model within the transformation family.
+</ParamField>
+
+```python
+from hummbl_base120 import Engine
+
+result = Engine.apply(
+    problem="Our deployment pipeline takes 45 minutes",
+    transformation="DE",
+)
+
+print(result.model.code)    # "DE1" — Root Cause Analysis (auto-selected)
+print(result.reframing)     # Structured reframing of your problem
+print(result.audit_tuple)   # ("DE1", "DE", "2026-04-14T09:32:11Z")
+```
+
+`TransformationResult` exposes:
+- `result.model` — the `Model` that was applied
+- `result.reframing` — the engine's structured output for your problem
+- `result.audit_tuple` — a `(model_code, transformation, timestamp)` tuple for logging
+
+---
+
+### Engine.recommend()
+
+Given a free-text problem, return the most relevant mental models ranked by relevance score. Use this when you don't know which transformation to apply or want to surface options for a human to choose from.
+
+```python
+Engine.recommend(
+    problem: str,
+    limit: int = 5,
+) -> list[Recommendation]
+```
+
+<ParamField path="problem" type="str" required>
+  A free-text description of the problem or question you want help reasoning about.
+</ParamField>
+
+<ParamField path="limit" type="int">
+  Maximum number of recommendations to return. Defaults to `5`.
+</ParamField>
+
+```python
+from hummbl_base120 import Engine
+
+recs = Engine.recommend(
+    problem="How do I prioritize features for my MVP?",
+    limit=3,
+)
+
+for r in recs:
+    print(f"{r.model.code}: {r.model.name} (score={r.score}) — {r.reason}")
+
+# DE7: Pareto Decomposition (score=0.87) — Focus on the 20% of features delivering 80% of value
+# P6:  Point-of-View Anchoring (score=0.74) — Define whose MVP this is before prioritizing
+# IN17: Counterfactual Negation (score=0.71) — Ask what a bad MVP would look like, then invert
+```
+
+---
+
+## Data Classes
+
+### Model
+
+The `Model` class is the core data object returned by `Engine.select()`, `Engine.list()`, and embedded in `TransformationResult` and `Recommendation`.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `code` | `str` | Stable model identifier, e.g. `"P1"`, `"IN6"`, `"DE7"` |
+| `name` | `str` | Human-readable model name |
+| `transformation` | `str` | Family code: `"P"`, `"IN"`, `"CO"`, `"DE"`, `"RE"`, or `"SY"` |
+| `definition` | `str` | What this model is |
+| `usage` | `str` | When and how to use it |
+| `examples` | `list[str]` | 2–3 worked examples |
+| `related` | `list[str]` | Codes of related models, e.g. `["DE3", "P1"]` |
+
+### Recommendation
+
+`Engine.recommend()` returns a list of `Recommendation` objects.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `model` | `Model` | The recommended mental model |
+| `score` | `float` | Relevance score from `0.0` to `1.0` |
+| `reason` | `str` | One-line explanation of why this model was recommended |
+
+---
+
+## Krineia Ledger
+
+The Krineia Ledger is an append-only audit layer that records every reasoning decision your agent makes. Each entry captures four node fields — **id** (who or what), **time** (when), **state** (current condition), and **drift** (deviation from setpoint) — giving you a provable governance trace that grows over time and never shrinks.
+
+<Note>
+  The import path is `hummbl_base120.verum` — this is retained as migration debt. The public-facing name of the module is **Krineia**.
+</Note>
+
+```python
+from pathlib import Path
+from hummbl_base120 import Engine
+from hummbl_base120.verum import Ledger
+
+# Open (or create) a ledger file
+ledger = Ledger(
+    path=Path("_state/reasoning.jsonl"),
+    agent_id="analyst-1",
+)
+
+# Apply a transformation and record it
+result = Engine.apply(problem="Our CI pipeline is flaky", transformation="DE")
+ledger.append(
+    model_code=result.model.code,
+    context="ci-reliability-session",
+    state="in_progress",
+    drift=0.0,
+)
+
+# Query entries within a time window
+entries = ledger.project(
+    since="2026-04-14T00:00:00Z",
+    until="2026-04-14T23:59:59Z",
+)
+for e in entries:
+    print(e.model_code, e.timestamp, e.drift)
+
+# Surface entries where reasoning has drifted
+flagged = ledger.cut(threshold=0.3)
+for e in flagged:
+    print(f"[DRIFT] {e.model_code} at {e.timestamp}: drift={e.drift}")
+```
+
+### Ledger Constructor
+
+```python
+Ledger(
+    path: Path | str,
+    agent_id: str,
+)
+```
+
+<ParamField path="path" type="Path | str" required>
+  Path to the JSONL file where entries are stored. The file is created if it does not exist. The directory must already exist.
+</ParamField>
+
+<ParamField path="agent_id" type="str" required>
+  A stable identifier for the reasoning agent writing to this ledger. Used as the `id` node field in each entry.
+</ParamField>
+
+### Ledger Methods
+
+**`ledger.append(model_code, context, state, drift) -> None`**
+
+Append a new entry to the ledger. Entries are written atomically to the JSONL file.
+
+<ParamField path="model_code" type="str" required>
+  The Base120 model code that was applied, e.g. `"DE1"`.
+</ParamField>
+
+<ParamField path="context" type="str" required>
+  A label for the reasoning session or task this entry belongs to.
+</ParamField>
+
+<ParamField path="state" type="str" required>
+  The current condition of the reasoning process, e.g. `"in_progress"`, `"complete"`, `"blocked"`.
+</ParamField>
+
+<ParamField path="drift" type="float" required>
+  Deviation from the intended reasoning setpoint. Use `0.0` for on-track reasoning; increase this value as the agent deviates from its intended path.
+</ParamField>
+
+---
+
+**`ledger.project(since, until) -> list[LedgerEntry]`**
+
+Return all entries whose timestamps fall within the given window. Both arguments are ISO 8601 strings.
+
+---
+
+**`ledger.cut(threshold) -> list[LedgerEntry]`**
+
+Return all entries where `drift` exceeds `threshold`. Use this to surface reasoning drift for review.
+
+---
+
+## CLI
+
+The CLI gives you access to Base120 from the terminal without writing any Python. All commands are available through the `hummbl_base120` module.
+
+**Get a model by code**
+
+```bash
+python -m hummbl_base120 get P1
+```
+
+**Recommend models for a problem**
+
+```bash
+python -m hummbl_base120 recommend "how do I scale a database"
+```
+
+**List all models in a transformation family**
+
+```bash
+python -m hummbl_base120 list --transformation DE
+```
+
+**List all 120 models as JSON**
+
+```bash
+python -m hummbl_base120 list --json
+```
+
+<Tip>
+  Pipe `list --json` into `jq` to filter, sort, or extract specific fields from the full model catalog. For example: `python -m hummbl_base120 list --json | jq '[.[] | select(.transformation == "SY")]'`
+</Tip>

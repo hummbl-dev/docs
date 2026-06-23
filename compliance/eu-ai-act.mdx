@@ -1,0 +1,135 @@
+---
+title: "EU AI Act Readiness: Agents to Annex III Requirements"
+sidebarTitle: "EU AI Act"
+description: "Understand EU AI Act Annex III requirements for high-risk AI systems and how Hummbl's primitives satisfy Articles 9-14 with verifiable runtime evidence."
+---
+
+The EU AI Act's Annex III high-risk provisions are expected to enter enforcement on **December 2, 2027**, per the May 2026 provisional agreement. If your AI system falls into a high-risk category — recruitment tools, credit scoring, biometric identification, critical infrastructure management, law enforcement applications, and more — you need documented, verifiable runtime controls in place before that date. Non-compliance carries penalties up to **€15 million or 3% of global annual turnover** (Article 99 Tier 2), whichever is higher. The `hummbl-governance` package implements the specific technical controls required by Articles 9 through 14 and produces machine-readable evidence that satisfies what auditors actually ask to see.
+
+<Warning>
+  Hummbl provides governance infrastructure, not legal advice. Whether your specific AI system qualifies as high-risk under Annex III is a legal determination. Engage qualified EU AI Act counsel to confirm your classification and obligations before relying solely on technical controls.
+</Warning>
+
+## Article Coverage
+
+The six articles that define technical requirements for high-risk AI systems under the EU AI Act each map to one or more Hummbl primitives. The table below shows the mapping and explains how each primitive satisfies the requirement at runtime.
+
+| Article | Requirement | Hummbl Primitive | How |
+|---------|-------------|-----------------|-----|
+| Art. 9 | Risk management system | Kill Switch + Circuit Breaker | Four-mode halt (`HALT_NONCRITICAL` → `HALT_ALL` → `EMERGENCY`) plus per-adapter failure isolation |
+| Art. 10 | Data governance | Governance Bus | Append-only audit trail records every action with a timestamp and agent identity |
+| Art. 11 | Technical documentation | All primitives | Every governance event is machine-readable JSONL — exportable as technical documentation artifacts |
+| Art. 12 | Record-keeping / logging | Governance Bus (BusWriter) | Timestamped, HMAC-signed log entries that satisfy immutability and traceability requirements |
+| Art. 13 | Transparency | Delegation Tokens | Cryptographic attribution ties each action to a specific agent, scope, and authority grant |
+| Art. 14 | Human oversight | Kill Switch | Non-delegable halt authority; no agent can suppress or bypass a kill switch invocation |
+
+### Article 12 in Detail: Logging
+
+Article 12 requires that high-risk AI systems automatically generate logs sufficient to assess conformity and identify risks throughout the system's operational lifetime. A log entry produced by `BusWriter` satisfies this requirement by including:
+
+- **Timestamp** — ISO 8601, UTC, millisecond precision
+- **Agent identity** — which agent produced the event
+- **Event type** — decision, action, policy check, halt, delegation
+- **Payload hash** — SHA-256 of the event body
+- **HMAC signature** — verifiable chain of custody using your signing key
+
+Every entry is appended to a local JSONL file that an auditor can open, grep, and verify without any Hummbl tooling installed.
+
+```python
+from hummbl_governance import BusWriter, BusEvent
+
+writer = BusWriter(log_path="./governance.jsonl", signing_key=YOUR_SIGNING_KEY)
+
+# This single call satisfies Article 12 logging for one agent action
+writer.post(
+    BusEvent(
+        agent_id="loan-underwriting-agent-v2",
+        event_type="decision",
+        payload={
+            "action": "approve_loan_application",
+            "application_id": "APP-2024-98731",
+            "confidence": 0.87,
+            "policy_version": "underwriting-v4.2",
+        },
+    )
+)
+```
+
+The resulting JSONL entry:
+
+```json
+{
+  "ts": "2025-11-14T09:23:41.187Z",
+  "agent_id": "loan-underwriting-agent-v2",
+  "event_type": "decision",
+  "payload_hash": "e3b0c44298fc1c149afb...",
+  "hmac": "sha256=9f86d081884c7d659a2f...",
+  "payload": {
+    "action": "approve_loan_application",
+    "application_id": "APP-2024-98731",
+    "confidence": 0.87,
+    "policy_version": "underwriting-v4.2"
+  }
+}
+```
+
+### Article 14 in Detail: Human Oversight
+
+Article 14 requires that high-risk AI systems be designed and developed such that natural persons can effectively oversee and intervene during the period of use. The Kill Switch implements this requirement with four graduated escalation modes:
+
+| Mode | Effect |
+|------|--------|
+| `HALT_NONCRITICAL` | Pauses non-critical agent operations; critical paths continue |
+| `HALT_CRITICAL` | Pauses all agent operations including critical paths |
+| `HALT_ALL` | Stops all operations system-wide |
+| `EMERGENCY` | Immediate termination; no graceful shutdown |
+
+Crucially, **no agent can override a kill switch check**. The check is synchronous and runs in the agent's own thread — an agent cannot continue executing after a halt is issued. This satisfies the Article 14 requirement that human oversight measures cannot be circumvented by the AI system itself.
+
+## Quick Compliance Check
+
+Before using the full 12-question assessment, answer these five questions to identify your highest-priority gaps:
+
+<Steps>
+  <Step title="Does your system log every decision it makes?">
+    Article 12 requires automatic, append-only logging of all AI-generated outputs and the inputs that produced them. If your system only logs errors, you have a gap.
+  </Step>
+  <Step title="Can a human halt your system within two seconds?">
+    Article 14 requires that a human can intervene and stop the system during operation. If halt requires a deployment, a support ticket, or cloud console access, you have a gap.
+  </Step>
+  <Step title="Can you trace any output back to the agent and data that produced it?">
+    Article 13 requires that the system's logic and decisions be explainable to affected parties. If you cannot reconstruct what happened from your logs, you have a gap.
+  </Step>
+  <Step title="Does your system have documented risk management procedures that execute at runtime?">
+    Article 9 requires a continuous risk management system — not a one-time document. Static policy PDFs do not satisfy this requirement.
+  </Step>
+  <Step title="Can you export your governance evidence without accessing a vendor's system?">
+    Auditors cannot access SaaS dashboards, third-party portals, or vendor-controlled infrastructure during an assessment. If your evidence chain depends on a vendor's availability, you have a portability gap.
+  </Step>
+</Steps>
+
+<Note>
+  Hummbl provides a free 12-question EU AI Act readiness assessment at [hummbl.io/readiness/eu-ai-act](https://hummbl.io/readiness/eu-ai-act). It covers all six article categories, produces an instant radar chart of your readiness posture, and requires no signup. Your results are shareable via a unique link.
+</Note>
+
+## Next Steps
+
+If you're building toward EU AI Act compliance, the recommended path is:
+
+<Steps>
+  <Step title="Take the free readiness assessment">
+    Complete the 12-question assessment at [hummbl.io/readiness/eu-ai-act](https://hummbl.io/readiness/eu-ai-act) to identify your current gaps across Articles 9–14.
+  </Step>
+  <Step title="Instrument your agent loop">
+    Add `BusWriter` to every agent that produces decisions, and add a `KillSwitch.check()` call at the top of your agent's execution loop. This covers Articles 12 and 14 in a single session.
+  </Step>
+  <Step title="Add delegation tokens to inter-agent calls">
+    Any time one agent invokes another, issue a delegation token scoped to the minimum required capabilities. This covers Article 13.
+  </Step>
+  <Step title="Configure the circuit breaker per adapter">
+    Set failure rate thresholds on each external adapter (database, API, model endpoint). This provides the continuous risk monitoring required by Article 9.
+  </Step>
+  <Step title="Engage legal counsel to confirm classification">
+    Confirm with qualified EU AI Act counsel whether your system qualifies as high-risk under Annex III and review your complete obligations under the Act.
+  </Step>
+</Steps>

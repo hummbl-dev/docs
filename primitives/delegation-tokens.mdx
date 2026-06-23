@@ -1,0 +1,162 @@
+---
+title: "Delegation Tokens: Cryptographic Authority for AI Agents"
+sidebarTitle: "Delegation Tokens"
+description: "DelegationTokenManager issues HMAC-SHA256 signed capability tokens that carry scope, chain-depth, and expiry for runtime agent attribution."
+---
+
+Delegation tokens give every agent action a cryptographically verifiable identity. Instead of trusting that an agent is who it claims to be, you issue a signed token that encodes exactly what that agent is allowed to do, for how long, and how many times it can re-delegate authority to sub-agents. When an audit happens — whether internal or regulatory — you have a chain of signed proof, not a log of unverified claims.
+
+Tokens are HMAC-SHA256 signed using Python's standard-library `hmac` module (no third-party crypto dependencies), then base64url-encoded so they are safe to pass as headers, environment variables, or tool arguments.
+
+## Feature flag
+
+<Note>
+  `DelegationTokenManager` is feature-flagged. You must set `ENABLE_IDP=true`
+  in your environment before importing or constructing it. This flag will be
+  removed when the feature reaches general availability in a future minor
+  release.
+</Note>
+
+```bash
+export ENABLE_IDP=true
+```
+
+## Install
+
+```bash
+pip install hummbl-governance
+```
+
+## Quick start
+
+```python
+import os
+from hummbl_governance import DelegationTokenManager
+
+os.environ["ENABLE_IDP"] = "true"
+mgr = DelegationTokenManager()
+
+# Issue a token scoped to document reads and draft writes, valid for 1 hour,
+# with a chain depth of 2 (this agent can delegate to one sub-agent)
+token = mgr.create_token(
+    agent_id="research-agent-1",
+    scope=["read:docs", "write:drafts"],
+    ttl=3600,
+    chain_depth=2,
+)
+
+# Validate the token before acting on it
+binding = mgr.validate_token(token)
+if binding and mgr.check_least_privilege(token, op="write:drafts"):
+    write_draft(content)
+```
+
+## Constructor
+
+<ParamField path="secret" type="bytes | None" default="None">
+  The HMAC signing secret. When `None`, Hummbl derives a secret from the
+  `HUMMBL_SIGNING_SECRET` environment variable. Pass an explicit value to share
+  the same signing context across multiple processes (e.g., a supervisor agent
+  and its workers that all need to validate each other's tokens).
+</ParamField>
+
+## Methods
+
+<ParamField path="create_token" type="method">
+  **`create_token(agent_id, scope, ttl, chain_depth) -> str`**
+
+  Signs and returns a base64url-encoded token. Every call is written to the
+  Governance Bus as a `DELEGATION` event.
+
+  - `agent_id` — the identifier of the agent receiving authority
+  - `scope` — list of capability strings the token grants (e.g., `["read:docs", "write:drafts"]`)
+  - `ttl` — time-to-live in seconds from the moment of issuance
+  - `chain_depth` — how many times this token can be re-delegated; `0` means it cannot be delegated further
+</ParamField>
+
+<ParamField path="validate_token" type="method">
+  **`validate_token(token: str) -> TokenBinding | None`**
+
+  Verifies the HMAC signature and checks expiry. Returns a `TokenBinding`
+  object with `agent_id`, `scope`, `chain_depth`, and `expires_at` fields on
+  success, or `None` if the token is expired, malformed, or tampered with.
+  Every validation attempt is written to the Governance Bus.
+</ParamField>
+
+<ParamField path="check_least_privilege" type="method">
+  **`check_least_privilege(token: str, op: str) -> bool`**
+
+  Returns `True` if `op` is within the token's scope. Use this immediately
+  before every privileged action to enforce least-privilege access. The check
+  is local — no network call required.
+</ParamField>
+
+## Token anatomy
+
+A delegation capability token (DCT) is a base64url-encoded JSON object. Decoding one reveals its full structure:
+
+```json
+{
+  "agent_id": "research-agent-1",
+  "scope": ["read:docs", "write:drafts"],
+  "chain_depth": 2,
+  "issued_at": "2026-04-05T14:00:00Z",
+  "expires_at": "2026-04-05T15:00:00Z",
+  "hmac": "a3f9...c812"
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `agent_id` | The agent that holds this token. Used for attribution in the Governance Bus. |
+| `scope` | The exact set of operations this token authorises. Nothing outside this list is permitted. |
+| `chain_depth` | Remaining re-delegation depth. A supervisor with depth `2` can issue a worker token at depth `1`; that worker can issue a leaf token at depth `0`. |
+| `issued_at` | UTC timestamp when `create_token` was called. |
+| `expires_at` | UTC timestamp after which `validate_token` returns `None`. |
+| `hmac` | HMAC-SHA256 signature over all other fields. Truncation or modification of any field invalidates the signature. |
+
+## Least-privilege check pattern
+
+Always pair `validate_token` with `check_least_privilege`. Validation proves the token is authentic and unexpired; the least-privilege check proves the current operation is within the token's granted scope.
+
+```python
+def execute_operation(token: str, op: str, fn, *args, **kwargs):
+    binding = mgr.validate_token(token)
+    if binding is None:
+        raise PermissionError("invalid or expired token")
+
+    if not mgr.check_least_privilege(token, op=op):
+        raise PermissionError(f"operation '{op}' not in token scope {binding.scope}")
+
+    return fn(*args, **kwargs)
+
+# Usage
+execute_operation(token, "write:drafts", write_draft, content=draft_text)
+```
+
+## Governance Bus integration
+
+Every token lifecycle event is written to the Governance Bus automatically — you do not need to call `BusWriter` yourself.
+
+| Event | Bus `msg_type` | When it fires |
+|-------|---------------|---------------|
+| Token issued | `DELEGATION_ISSUED` | On every `create_token` call |
+| Token validated | `DELEGATION_VALIDATED` | On every successful `validate_token` call |
+| Validation failed | `DELEGATION_REJECTED` | On every failed `validate_token` call |
+| Revocation | `DELEGATION_REVOKED` | When a token is explicitly revoked |
+
+This means your audit log automatically contains a complete record of who held what authority, when they used it, and when it expired.
+
+## See also
+
+<CardGroup cols={3}>
+  <Card title="Delegation Context" icon="shield-halved" href="/primitives/delegation-context">
+    Use CapabilityFence to enforce scope-narrowing when re-delegating tokens to sub-agents.
+  </Card>
+  <Card title="Governance Bus" icon="scroll" href="/primitives/governance-bus">
+    All token events land in the bus automatically. Query with read_since for audit reports.
+  </Card>
+  <Card title="Kill Switch" icon="power-off" href="/primitives/kill-switch">
+    The kill switch is non-delegable — tokens cannot grant authority to override a halt.
+  </Card>
+</CardGroup>

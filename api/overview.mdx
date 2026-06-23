@@ -1,0 +1,99 @@
+---
+title: "Base120 REST API Overview — api.hummbl.io"
+sidebarTitle: "Overview"
+description: "The Hummbl Base120 REST API provides access to 120 mental models over HTTPS. No authentication required. 100 requests per minute per IP."
+---
+
+The Hummbl Base120 REST API gives you programmatic access to all 120 mental models, model recommendations, and workflow matching. It is hosted at `https://api.hummbl.io`, served over HTTPS, and returns `application/json` with CORS headers on every response. No authentication is required during the beta period — send requests directly from any HTTP client.
+
+<Note>
+  **Base URL:** `https://api.hummbl.io`
+</Note>
+
+## Authentication
+
+No authentication is required during the beta period. All endpoints are publicly accessible without an API key or token. Authentication will be introduced in a future release; when that happens, this page will be updated with the exact scheme and migration steps.
+
+## Rate limits
+
+Every IP address is allowed up to 100 requests per minute. The window is a 60-second sliding window — it does not reset on the clock minute. When you exceed the limit, the API returns `429 Too Many Requests` until the window clears.
+
+| Parameter | Value |
+|-----------|-------|
+| Requests per minute | 100 |
+| Window | 60 seconds (sliding) |
+| Scope | Per IP address |
+| Exceeded response | `429 Too Many Requests` |
+
+## Error handling
+
+All error responses share the same JSON envelope. Check `success` first, then read the `error` string for a human-readable description of what went wrong.
+
+| Status Code | Meaning |
+|-------------|---------|
+| 200 | Success |
+| 400 | Bad request — invalid or missing parameters |
+| 404 | Not found — resource does not exist |
+| 429 | Rate limited — too many requests |
+| 500 | Server error — unexpected internal failure |
+
+```json
+{ "success": false, "error": "Error description" }
+```
+
+## Quick start
+
+Use any HTTP client to start calling the API. The examples below fetch all models, retrieve a single model by code, and request model recommendations for a problem description.
+
+<CodeGroup>
+
+```bash cURL
+# Get all models
+curl https://api.hummbl.io/v1/models
+
+# Get a specific model
+curl https://api.hummbl.io/v1/models/P1
+
+# Get model recommendations
+curl -X POST https://api.hummbl.io/v1/recommend \
+  -H "Content-Type: application/json" \
+  -d '{"problem": "How do I prioritize features?"}'
+```
+
+```javascript JavaScript
+// Fetch all models
+const res = await fetch('https://api.hummbl.io/v1/models');
+const data = await res.json();
+console.log(data.data.length); // 120
+```
+
+```python Python
+import urllib.request, json
+
+def get_model(code: str) -> dict:
+    url = f"https://api.hummbl.io/v1/models/{code}"
+    with urllib.request.urlopen(url) as r:
+        return json.loads(r.read())
+
+model = get_model("P1")
+print(model["data"]["definition"])
+```
+
+</CodeGroup>
+
+## Explore the API
+
+<CardGroup cols={2}>
+  <Card title="GET /v1/models" icon="list" href="/api/models">
+    List all 120 mental models or retrieve a single model by its Base120 code.
+  </Card>
+  <Card title="POST /v1/recommend" icon="lightbulb" href="/api/recommend">
+    Get ranked mental model recommendations for a freeform problem description.
+  </Card>
+  <Card title="GET /health" icon="heart-pulse" href="/api/health">
+    Check API status, version, model count, and rate limit state.
+  </Card>
+  <Card title="Python SDK" icon="python" href="/base120/sdk-reference">
+    Use the Python SDK for richer access including scores, reasoning, and workflow support.
+  </Card>
+</CardGroup>

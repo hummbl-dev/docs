@@ -1,0 +1,167 @@
+---
+title: "Kill Switch: Four-Mode Emergency Halt for Agent Fleets"
+sidebarTitle: "Kill Switch"
+description: "KillSwitch provides a file-system-persisted four-mode emergency halt for AI agent systems that survives process restarts and container rebuilds."
+---
+
+The Kill Switch gives you a reliable, non-delegable emergency stop for your entire agent fleet. When something goes wrong — an anomaly in production, an unexpected tool call, a cascading failure — you engage the kill switch once and every agent that checks `ks.engaged()` stops within its next loop iteration. State is written atomically to disk, so even a full process restart or container rebuild cannot bypass an active halt.
+
+The kill switch is **non-delegable**: no agent, token, or automated system can override or disengage it. Only a human-attributed call to `disengage()` can release the halt. This is a deliberate design choice to prevent automated systems from talking themselves out of a safety constraint.
+
+## Key properties
+
+- **Sub-2-second halt time** across all agents that check at the top of their loop
+- **File-system persisted** — survives process restarts and container rebuilds via atomic rename
+- **Non-delegable** — no agent authority can override or disengage it
+- **Four graduated modes** — from pausing non-critical work to full emergency halt with alerting
+- **Governance Bus integrated** — every engagement and release is logged with actor attribution
+
+## Install
+
+```bash
+pip install hummbl-governance
+```
+
+## Quick start
+
+```python
+from pathlib import Path
+from hummbl_governance import KillSwitch, KillSwitchMode
+
+ks = KillSwitch(state_dir=Path("_state"))
+
+# Engage from anywhere — an ops agent, a monitoring hook, a human CLI
+ks.engage(
+    mode=KillSwitchMode.HALT_ALL,
+    reason="anomaly detected in prod",
+    triggered_by="ops-agent-1",
+)
+
+# Check before every action inside your agent loop
+if not ks.engaged():
+    agent.execute(task)
+else:
+    logger.info("halted: %s", ks.get_status())
+
+# Release once the incident is resolved
+ks.disengage(reason="incident resolved", triggered_by="ops-agent-1")
+```
+
+## Modes
+
+| Mode | Effect |
+|------|--------|
+| `DISENGAGED` | Normal operation. All agents run freely. |
+| `HALT_NONCRITICAL` | Non-critical agents pause. Tasks listed in `critical_tasks` continue uninterrupted. |
+| `HALT_ALL` | All agent actions are blocked, including tasks in `critical_tasks`. |
+| `EMERGENCY` | Full halt plus alerting callbacks and a point-in-time state snapshot for forensic review. |
+
+## Constructor
+
+<ParamField path="state_dir" type="Path | None" default="None">
+  Directory where the kill-switch state file is persisted. Defaults to the
+  current working directory. Use a path on a volume that survives container
+  rebuilds (e.g. `_state/`). Hummbl writes the file with an atomic rename so
+  concurrent reads never see a partially written state.
+</ParamField>
+
+<ParamField path="require_hmac" type="bool" default="True">
+  When `True`, the state file is HMAC-signed on write and the signature is
+  verified on every read. Set to `False` only in local development environments
+  where you control the filesystem entirely.
+</ParamField>
+
+<ParamField path="signing_secret" type="bytes | None" default="None">
+  The secret used for HMAC signing. When `None`, Hummbl derives a secret from
+  the environment. Pass an explicit value to share the same secret across
+  multiple processes that need to read the same state file.
+</ParamField>
+
+<ParamField path="critical_tasks" type="frozenset[str] | None" default="None">
+  A set of task IDs that are allowed to continue during `HALT_NONCRITICAL`.
+  Has no effect during `HALT_ALL` or `EMERGENCY`. See the critical-tasks
+  pattern below.
+</ParamField>
+
+## Methods
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `engage` | `(mode, reason, triggered_by, affected_tasks=0) -> KillSwitchEvent` | Transitions to the given mode, writes the state file, and logs the engagement to the Governance Bus. |
+| `disengage` | `(reason, triggered_by) -> KillSwitchEvent` | Returns to `DISENGAGED`, writes the state file, and logs the release. |
+| `mode` | `() -> KillSwitchMode` | Returns the current `KillSwitchMode` enum value. |
+| `engaged` | `() -> bool` | Returns `True` if the mode is anything other than `DISENGAGED`. Use this in agent loops. |
+| `get_status` | `() -> dict` | Returns a dict with `mode`, `reason`, `triggered_by`, and `engaged_at` fields. |
+| `check_task_allowed` | `(task_id: str) -> bool` | Returns `True` if the given task is permitted to run in the current mode. Respects the `critical_tasks` set. |
+
+## The critical-tasks pattern
+
+Use `HALT_NONCRITICAL` together with `critical_tasks` to pause exploratory or low-priority agents while keeping business-critical tasks running. For example, you might allow a payment-reconciliation agent to complete its current run while halting all code-generation and research agents.
+
+```python
+from pathlib import Path
+from hummbl_governance import KillSwitch, KillSwitchMode
+
+CRITICAL = frozenset({"reconcile-payments", "send-alerts"})
+
+ks = KillSwitch(
+    state_dir=Path("_state"),
+    critical_tasks=CRITICAL,
+)
+
+# Pause everything except critical tasks
+ks.engage(
+    mode=KillSwitchMode.HALT_NONCRITICAL,
+    reason="elevated error rate — pausing non-critical agents",
+    triggered_by="monitoring-agent",
+)
+
+# Inside each agent's main loop:
+task_id = "generate-report"
+if ks.check_task_allowed(task_id):
+    run_task(task_id)
+else:
+    logger.info("task %s paused by kill switch", task_id)
+```
+
+## Best practice: check at the top of every loop iteration
+
+<Tip>
+  Call `ks.engaged()` (or `ks.check_task_allowed(task_id)`) at the **start** of
+  every agent loop iteration, not just at startup. The kill switch is designed
+  to halt a running fleet quickly — that only works if each agent polls for
+  state changes regularly. A long-running task that checks once at boot can run
+  for minutes before noticing an engagement.
+</Tip>
+
+```python
+while True:
+    # Always check first
+    if ks.engaged():
+        logger.warning("kill switch active (%s) — sleeping", ks.mode())
+        time.sleep(5)
+        continue
+
+    task = queue.get()
+    process(task)
+```
+
+<Warning>
+  Never cache the result of `ks.engaged()` across iterations. The state file
+  can be updated by another process (an ops agent, a CLI command, or a
+  monitoring hook) at any time.
+</Warning>
+
+## See also
+
+<CardGroup cols={3}>
+  <Card title="Governance Bus" icon="scroll" href="/primitives/governance-bus">
+    Every kill-switch engagement and release is written to the bus with full actor attribution.
+  </Card>
+  <Card title="Circuit Breaker" icon="bolt" href="/primitives/circuit-breaker">
+    Use the circuit breaker to isolate individual adapter failures before reaching for the kill switch.
+  </Card>
+  <Card title="Delegation Tokens" icon="key" href="/primitives/delegation-tokens">
+    Delegation tokens cannot override the kill switch — halts are non-delegable by design.
+  </Card>
+</CardGroup>

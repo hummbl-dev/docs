@@ -1,0 +1,117 @@
+---
+title: "GET /v1/models — List and Retrieve Base120 Mental Models"
+sidebarTitle: "Models"
+description: "GET /v1/models lists all 120 Base120 mental models. GET /v1/models/:code retrieves a single model by its transformation code like P1, IN6, or DE7."
+---
+
+The models endpoints give you two ways to access the Base120 model library: list every model in a single call, or fetch a specific model by its transformation code. Both endpoints are read-only, require no authentication, and return the same `Model` object shape.
+
+---
+
+## List all models — `GET /v1/models`
+
+Returns all 120 Base120 mental models as an array, ordered by priority. Use this endpoint to populate a local cache, build a picker UI, or inspect the full library at once.
+
+```bash
+curl https://api.hummbl.io/v1/models
+```
+
+**Response — 200 OK**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "code": "P1",
+      "name": "First Principles Framing",
+      "definition": "Reduce complex problems to foundational truths that cannot be further simplified",
+      "priority": 1
+    },
+    {
+      "code": "P2",
+      "name": "Stakeholder Mapping",
+      "definition": "Identify and visualize all parties affected by or influencing a decision",
+      "priority": 2
+    }
+    // ... 118 more models
+  ]
+}
+```
+
+**Response fields**
+
+<ResponseField name="success" type="boolean">
+  `true` when the request succeeded.
+</ResponseField>
+
+<ResponseField name="data" type="Model[]">
+  Array of all 120 mental model objects, ordered by `priority`.
+
+  <Expandable title="Model object fields">
+    <ResponseField name="code" type="string">
+      The unique Base120 transformation code, e.g. `P1`, `IN6`, `CO4`, `DE7`, `RE3`, `SY13`. Codes follow the pattern `{family}{number}`.
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      The human-readable name of the mental model.
+    </ResponseField>
+    <ResponseField name="definition" type="string">
+      A concise definition describing what the model does and when to apply it.
+    </ResponseField>
+    <ResponseField name="priority" type="integer">
+      Relative importance ranking within the full library. Lower numbers indicate higher priority.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## Get single model — `GET /v1/models/:code`
+
+Returns a single mental model looked up by its Base120 code. Use this endpoint when you already know which model you need and want to retrieve its full definition without fetching the entire library.
+
+**Path parameter**
+
+<ParamField path="code" type="string" required>
+  A valid Base120 transformation code. Codes are grouped into six families of 20 models each: `P1`–`P20` (Problem framing), `IN1`–`IN20` (Insight), `CO1`–`CO20` (Concept), `DE1`–`DE20` (Decision), `RE1`–`RE20` (Reasoning), and `SY1`–`SY20` (Synthesis). Codes are case-sensitive.
+</ParamField>
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.hummbl.io/v1/models/P1
+```
+
+```javascript JavaScript
+const res = await fetch('https://api.hummbl.io/v1/models/P1');
+const { data } = await res.json();
+console.log(data.name);       // "First Principles Framing"
+console.log(data.definition); // "Reduce complex problems to..."
+```
+
+</CodeGroup>
+
+**Response — 200 OK**
+
+```json
+{
+  "success": true,
+  "data": {
+    "code": "P1",
+    "name": "First Principles Framing",
+    "definition": "Reduce complex problems to foundational truths that cannot be further simplified",
+    "priority": 1
+  }
+}
+```
+
+**Response — 404 Not Found**
+
+The API returns 404 when the code you supplied does not match any model in the library. Check that the family prefix and number are correct and that the code is capitalised.
+
+```json
+{
+  "success": false,
+  "error": "Model not found: X99"
+}
+```

@@ -1,0 +1,120 @@
+---
+title: "POST /v1/recommend — Get Mental Model Recommendations"
+sidebarTitle: "Recommend"
+description: "POST /v1/recommend returns ranked Base120 mental model recommendations for a freeform problem description, with pattern matching metadata."
+---
+
+The recommend endpoint takes a freeform description of any problem or decision you're facing and returns a ranked list of Base120 mental models most relevant to it. Use it when you're not sure which models apply, when you want to surface options you hadn't considered, or when you're building a tool that guides users to the right thinking frameworks automatically.
+
+## Request body
+
+Send a JSON body with the following field.
+
+<ParamField body="problem" type="string" required>
+  A freeform description of the problem, decision, or challenge you want recommendations for. Write it as you would explain the situation to a colleague — the more context you include, the better the pattern matching. Example: `"How do I prioritize features for a product with competing stakeholder demands?"`
+</ParamField>
+
+## Examples
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.hummbl.io/v1/recommend \
+  -H "Content-Type: application/json" \
+  -d '{"problem": "How do I prioritize features?"}'
+```
+
+```python Python
+import urllib.request, json
+
+def recommend(problem: str) -> dict:
+    url = "https://api.hummbl.io/v1/recommend"
+    payload = json.dumps({"problem": problem}).encode()
+    req = urllib.request.Request(
+        url,
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(req) as r:
+        return json.loads(r.read())
+
+result = recommend("How do I prioritize features?")
+for model in result["data"]:
+    print(model["code"], model["name"])
+```
+
+```javascript JavaScript
+const res = await fetch('https://api.hummbl.io/v1/recommend', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ problem: 'How do I prioritize features?' }),
+});
+const { data, meta } = await res.json();
+console.log(data);               // ranked model recommendations
+console.log(meta.matchedPatterns); // ["Decomposition"]
+```
+
+</CodeGroup>
+
+## Response fields
+
+<ResponseField name="success" type="boolean">
+  `true` when the request succeeded and recommendations were generated.
+</ResponseField>
+
+<ResponseField name="data" type="Model[]">
+  Ranked array of mental model objects recommended for your problem. Models are ordered from most to least relevant.
+
+  <Expandable title="Model object fields">
+    <ResponseField name="code" type="string">
+      The Base120 transformation code, e.g. `P1`, `IN6`, `CO4`.
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      The human-readable name of the recommended mental model.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="meta" type="object">
+  Metadata describing how the recommendations were generated.
+
+  <Expandable title="meta object fields">
+    <ResponseField name="matchedPatterns" type="string[]">
+      The transformation families or patterns identified in your problem description, e.g. `["Decomposition"]`. Use these to understand which areas of the Base120 library the engine drew from.
+    </ResponseField>
+    <ResponseField name="keywordsAnalyzed" type="integer">
+      The number of keywords extracted from your problem string and used during pattern matching.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Full example
+
+**Request**
+
+```json
+{
+  "problem": "How do I prioritize features?"
+}
+```
+
+**Response — 200 OK**
+
+```json
+{
+  "success": true,
+  "data": [
+    { "code": "P1", "name": "First Principles Framing" },
+    { "code": "P2", "name": "Stakeholder Mapping" }
+  ],
+  "meta": {
+    "matchedPatterns": ["Decomposition"],
+    "keywordsAnalyzed": 2
+  }
+}
+```
+
+<Tip>
+  Use the Python SDK's `Engine.recommend()` method for richer results that include relevance scores, per-model reasoning, and direct links into workflow matching. See the [Python SDK reference](/base120/sdk-reference) for details.
+</Tip>

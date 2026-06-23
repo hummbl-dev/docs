@@ -1,0 +1,84 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "Hummbl",
+  "theme": "luma",
+  "favicon": "https://media.brand.dev/3074cb94-0fb4-4af6-a6fb-dcb8f4670135.png",
+  "colors": {
+    "primary": "#1c8c44",
+    "light": "#8cbca4",
+    "dark": "#cde2d5"
+  },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/hummbl-dev"
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "concepts"
+            ]
+          },
+          {
+            "group": "Governance Primitives",
+            "pages": [
+              "primitives/governance-bus",
+              "primitives/kill-switch",
+              "primitives/delegation-tokens",
+              "primitives/delegation-context",
+              "primitives/circuit-breaker",
+              "primitives/mcp-attestation"
+            ]
+          },
+          {
+            "group": "Base120 Models",
+            "pages": [
+              "base120/overview",
+              "base120/sdk-reference",
+              "base120/mcp-server",
+              "base120/rest-api"
+            ]
+          },
+          {
+            "group": "Tools",
+            "pages": [
+              "tools/arbiter",
+              "tools/hummbl-agent"
+            ]
+          },
+          {
+            "group": "Compliance",
+            "pages": [
+              "compliance/overview",
+              "compliance/eu-ai-act",
+              "compliance/nist-ai-rmf",
+              "compliance/iso-42001"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "REST API",
+            "pages": [
+              "api/overview",
+              "api/models",
+              "api/recommend",
+              "api/health"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

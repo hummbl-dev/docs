@@ -1,0 +1,138 @@
+---
+title: "hummbl-agent: Policy-Bounded Control Plane for AI Agents"
+sidebarTitle: "hummbl-agent"
+description: "hummbl-agent provides registry-first skill management, policy-bounded routing, and auditable execution across 10+ LLM backends with no vendor lock-in."
+---
+
+hummbl-agent is a TypeScript control plane for AI agent systems built on a single premise: policies decide, agents execute. Rather than letting LLMs choose which skills to invoke or which backends to call at runtime, hummbl-agent compiles a JSON policy DSL into deterministic `ControlDecision` objects before any model is involved. Every skill execution is registry-verified, every routing decision is policy-bounded, and every action produces an auditable record — regardless of which LLM backend is running underneath.
+
+<Note>
+  hummbl-agent is proprietary software. Visit the [GitHub repository](https://github.com/hummbl-dev/hummbl-agent) to request access or contact the Hummbl team for licensing information.
+</Note>
+
+## Core Architecture
+
+hummbl-agent is organized into six focused packages plus a canonical skill registry. Each primitive has a single, well-defined responsibility.
+
+| Primitive | Purpose | Location |
+|---|---|---|
+| Kernel | Type-safe agent, task, tool, and state definitions | `packages/kernel/` |
+| Control Plane | JSON policy DSL, deterministic compilation, emits `ControlDecision` | `packages/control-plane/` |
+| Router | Routes skills to runners based on policy and capability matching | `packages/router/` |
+| Runners | Adapter layer for 10 LLM backends (Claude, Codex, Gemini, Grok, Ollama, and more) | `packages/runners/` |
+| Governance | Policy schemas, compliance claims, and audit logs | `packages/governance/` |
+| Gateway | External service adapters | `packages/gateway/` |
+| Skill Registry | 75+ skills with SHA-256 integrity, CI-validated manifest | `skills/` |
+
+## Three Principles
+
+### 1. Registry-First
+
+The local `skills/MANIFEST.json` is the only source of truth for what skills exist and what they do. Every skill entry includes a SHA-256 hash that is verified at load time. hummbl-agent never fetches skills from an external registry and never resolves them dynamically at runtime. If a skill isn't in the manifest, it doesn't run.
+
+This means your agent system's attack surface is fully enumerable. You can audit every skill your agents can execute by reading a single file.
+
+### 2. Policy-Bounded
+
+You define what can run, where, and under what constraints in a JSON policy DSL. The control plane compiles that policy into a deterministic `ControlDecision` before any model call is made. Routing is never delegated to an LLM — no model decides which skill to invoke or which backend to use. The policy decides, and the control plane enforces it.
+
+```json
+{
+  "policy": "production-v1",
+  "allow": ["search", "summarize", "classify"],
+  "deny": ["write-file", "exec"],
+  "runner": "claude-code",
+  "max_tokens": 4096,
+  "require_approval": ["send-email"]
+}
+```
+
+### 3. Vendor-Agnostic
+
+All ten LLM backends are interchangeable adapters that implement the same runner interface. You can swap Claude for Ollama or Codex for Gemini without changing your governance configuration, your skill definitions, or your policy DSL. The control plane is entirely decoupled from the underlying model.
+
+## Getting Started
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/hummbl-dev/hummbl-agent.git
+    cd hummbl-agent
+    ```
+  </Step>
+
+  <Step title="Install dependencies with Corepack and pnpm">
+    hummbl-agent uses pnpm workspaces managed through Corepack. Make sure you are running Node 20+.
+
+    ```bash
+    corepack enable
+    pnpm install
+    ```
+
+    Corepack pins the exact pnpm version (9.14.4) declared in `package.json`, so all contributors and CI environments use the same toolchain automatically.
+  </Step>
+
+  <Step title="Validate skill schemas">
+    Run the schema linter to confirm that all skill definitions in the registry conform to the canonical JSON Schema.
+
+    ```bash
+    pnpm run lint:schemas
+    ```
+
+    This validates every skill in `skills/` against the schemas in `schemas/` and reports any mismatches before you run any agents.
+  </Step>
+
+  <Step title="Run end-to-end validation">
+    The e2e script exercises the full pipeline — policy compilation, skill loading, runner selection, and execution — against a set of fixture scenarios.
+
+    ```bash
+    scripts/e2e-validate.sh
+    ```
+
+    A clean run confirms that your environment is correctly set up and all packages are wired together.
+  </Step>
+</Steps>
+
+## Project Structure
+
+```
+hummbl-agent/
+├── packages/
+│   ├── kernel/          # Core types: Agent, Task, Tool, State
+│   ├── control-plane/   # Policy DSL + deterministic ControlDecision compiler
+│   ├── router/          # Skill-to-runner routing engine
+│   ├── runners/         # 10 LLM backend adapters
+│   ├── governance/      # Policy schemas, compliance claims, audit logs
+│   └── gateway/         # External service adapters
+├── skills/
+│   ├── MANIFEST.json    # Canonical skill registry (SHA-256 verified)
+│   └── */               # Individual skill definitions
+└── schemas/             # JSON Schema definitions for skills and policies
+```
+
+## Supported Runners
+
+hummbl-agent ships adapters for ten LLM backends out of the box:
+
+- **Claude Code** (Anthropic)
+- **Codex** (OpenAI)
+- **Gemini** (Google)
+- **Grok** (xAI)
+- **Ollama** (local models)
+- Five additional runner adapters available in the `packages/runners/` directory
+
+Every runner implements the same interface. Swapping backends is a one-line policy change — no application code modifications required.
+
+## Governance Integration
+
+hummbl-agent is designed to slot directly into the broader Hummbl governance stack. The `packages/governance/` package emits structured audit logs and compliance claims that are consumable by `hummbl-governance` primitives, giving you a continuous record of what ran, under which policy, on which backend, and what it produced.
+
+<CardGroup cols={1}>
+  <Card
+    title="hummbl-governance Quickstart"
+    icon="shield-check"
+    href="/quickstart"
+  >
+    Connect hummbl-agent to the governance layer to enforce compliance policies and stream audit logs across your entire agent fleet.
+  </Card>
+</CardGroup>

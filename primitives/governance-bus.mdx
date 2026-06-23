@@ -1,0 +1,141 @@
+---
+title: "Governance Bus: Append-Only Audit Log for AI Agents"
+sidebarTitle: "Governance Bus"
+description: "BusWriter provides an append-only JSONL audit trail for every AI agent action. Assessor-readable, grep-friendly, and evidence-preservation compliant."
+---
+
+The Governance Bus is the single source of truth for every action taken by agents in your system. Every write is timestamped, actor-attributed, and appended to a plain JSONL file that you can inspect with any text editor, pipe through `grep`, or ingest into your SIEM. Nothing is ever mutated or deleted — the log only grows, giving you a tamper-evident record that satisfies evidence-preservation requirements for AI audits.
+
+Every other Hummbl governance primitive writes to the bus automatically: delegation tokens log issuance and use, the kill switch logs engagements and releases, and circuit breakers log every state transition. You rarely need to call `BusWriter` directly, but you will query it constantly.
+
+## Install
+
+```bash
+pip install hummbl-governance
+```
+
+## Quick start
+
+```python
+from pathlib import Path
+from hummbl_governance import BusWriter
+
+# Open (or create) the bus file
+bus = BusWriter(bus_path="_state/governance/events.jsonl")
+
+# Write an event from an agent
+bus.post(
+    from_id="agent-claude-1",
+    to_id="all",
+    msg_type="STATUS",
+    message="file.write src/api.py (42 lines added)",
+)
+
+# Read back everything since a given point in time
+for event in bus.read_since(timestamp="2026-04-05T00:00:00Z"):
+    print(event.from_id, event.msg_type, event.message)
+```
+
+The bus file is created automatically if it does not exist. The directory must already exist; Hummbl will not create it for you so that you can control permissions explicitly.
+
+## Constructor
+
+<ParamField path="bus_path" type="str | Path" required>
+  Path to the JSONL file that backs the bus. Use a path inside your project's
+  `_state/governance/` directory so that it is excluded from version control
+  but persisted across process restarts.
+</ParamField>
+
+<ParamField path="policy" type="PolicyLevel" default="PolicyLevel.PERMISSIVE">
+  Controls validation strictness. `PERMISSIVE` (default) warns on malformed
+  entries but still appends them. `STRICT` raises on any schema violation.
+  Override at runtime with the `BUS_SECURITY_POLICY=strict` environment
+  variable without changing code.
+</ParamField>
+
+## Methods
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `post` | `(from_id, to_id, msg_type, message, *, timestamp=None, validate=True) -> None` | Appends one JSONL entry. Generates an ISO 8601 UTC timestamp automatically when `timestamp` is `None`. |
+| `read_all` | `() -> list[Message]` | Returns every entry in the file, oldest first. |
+| `read_since` | `(timestamp: str) -> list[Message]` | Returns all entries whose timestamp is strictly after the given ISO 8601 string. Useful for incremental polling. |
+| `message_count` | `() -> int` | Returns the number of entries currently in the file. Useful for health checks and test assertions. |
+
+## Wire format
+
+Each line in the JSONL file is a self-contained JSON object. The schema is frozen under **fm-contracts-v0.1** — field names and types will not change in a breaking way without a major version bump and a deprecation notice.
+
+```json
+{
+  "timestamp": "2026-04-05T14:22:01.004321Z",
+  "from_id": "agent-claude-1",
+  "to_id": "all",
+  "msg_type": "STATUS",
+  "message": "file.write src/api.py (42 lines added)",
+  "metadata": {}
+}
+```
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `timestamp` | ISO 8601 UTC string | Set by `BusWriter`; nanosecond precision on platforms that support it. |
+| `from_id` | string | The agent or system component that originated the event. |
+| `to_id` | string | Intended audience. Use `"all"` for broadcast events. |
+| `msg_type` | string | Semantic category: `STATUS`, `DELEGATION`, `KILL_SWITCH`, `CIRCUIT_BREAKER`, etc. |
+| `message` | string | Human-readable description of the event. |
+| `metadata` | object | Optional structured payload for machine consumption. |
+
+The format is intentionally grep-friendly:
+
+```bash
+# All kill-switch events in the last 24 hours
+grep '"msg_type": "KILL_SWITCH"' _state/governance/events.jsonl
+
+# Everything from a specific agent
+grep '"from_id": "agent-claude-1"' _state/governance/events.jsonl
+```
+
+## PolicyLevel
+
+<Note>
+  You can also set the policy via the `BUS_SECURITY_POLICY` environment variable
+  (`permissive` or `strict`) without touching code. This is useful for tightening
+  governance in production while keeping development permissive.
+</Note>
+
+| Level | Behavior |
+|-------|----------|
+| `PolicyLevel.PERMISSIVE` | Warns on schema violations but still appends the entry. Good for development and migration. |
+| `PolicyLevel.STRICT` | Raises `ValidationError` on any schema violation. Recommended for production agent fleets. |
+
+## When to use BusWriter directly
+
+<Note>
+  Most of the time you do not call `BusWriter.post` yourself — the other
+  primitives do it for you. The main reasons to call it directly are:
+
+  - Recording custom application-level events (e.g., `"human-approved the deployment plan"`)
+  - Writing integration tests that assert a specific event appeared in the log
+  - Building a read-only audit dashboard that queries `read_since` on a schedule
+</Note>
+
+<Tip>
+  Store the bus file on a volume that survives container rebuilds. Assessors
+  and compliance tools expect a continuous, unbroken log. A gap in the
+  timeline is just as suspicious as a missing entry.
+</Tip>
+
+## See also
+
+<CardGroup cols={3}>
+  <Card title="Delegation Tokens" icon="key" href="/primitives/delegation-tokens">
+    Every token issuance, validation, and revocation is written to the bus automatically.
+  </Card>
+  <Card title="Kill Switch" icon="power-off" href="/primitives/kill-switch">
+    All four kill-switch mode transitions are logged to the bus with actor attribution.
+  </Card>
+  <Card title="Circuit Breaker" icon="bolt" href="/primitives/circuit-breaker">
+    Every CLOSED → OPEN → HALF_OPEN transition is appended as a bus event.
+  </Card>
+</CardGroup>
