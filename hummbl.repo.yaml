@@ -1,0 +1,21 @@
+repo:
+  name: docs
+  org: hummbl-dev
+  description: "HUMMBL documentation and knowledge base"
+  visibility: public
+  class: code/library
+  steward: HUMMBL Research Institute
+  approving_human: Reuben Bowlby
+  standard_version: v0.1
+  model_provider_neutral: true
+  validation:
+    command: "python -m pytest"
+  governance:
+    constitution: CONSTITUTION.md
+    doctrine: DOCTRINE.md
+    agents: AGENTS.md
+    krineia: KRINEIA.md
+    receipts: _receipts/
+  docs:
+    adr: docs/adr/
+    handoffs: docs/handoffs/
