@@ -29,6 +29,15 @@ Preview at `http://localhost:3000`.
 
 Changes pushed to `main` are deployed to production automatically via the Mintlify GitHub App. **Do not push to `main` without review.** All public-facing claims must pass the claim-evidence policy before publication.
 
+### Validation gate
+
+A CI workflow (`.github/workflows/validate-docs.yml`) runs on every PR and push to `main`:
+
+1. **Navigation integrity** — `python3 scripts/validate_docs.py` checks every `docs.json` page reference resolves to an existing `.mdx` file
+2. **Claim-surface check** — `python3 scripts/check_claims.py` flags stale quantitative claims (test counts, primitive counts, compliance frameworks, API endpoints)
+
+Both scripts are reproducible locally by agents. Run them before pushing to `main`.
+
 ### Claim-evidence policy
 
 Public docs that make compliance, primitive-count, test-count, or product capability claims must cite the internal evidence ledger or current primary source. See:
