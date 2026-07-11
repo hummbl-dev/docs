@@ -25,6 +25,8 @@ This file tracks public-facing claims in HUMMBL documentation. Every compliance,
 | Maps to SOC 2 | `introduction.mdx` | [hummbl-governance/docs/soc2-mapping.md](https://github.com/hummbl-dev/hummbl-governance/blob/main/docs/soc2-mapping.md) | 2026-07-11 | High — mapping doc exists |
 | 120 Base120 reasoning models | `introduction.mdx` | [hummbl-agent/registry.json](https://github.com/hummbl-dev/hummbl-agent) | 2026-07-11 | High — registry validated in CI |
 | Zero third-party runtime dependencies | `introduction.mdx` | [hummbl-governance/pyproject.toml](https://github.com/hummbl-dev/hummbl-governance/blob/main/pyproject.toml) | 2026-07-11 | High — enforced by dep-check |
+| 2027 collected tests (hummbl-governance) | `quickstart.mdx` | [hummbl-governance README](https://github.com/hummbl-dev/hummbl-governance#readme) | 2026-07-11 | High — matches current source |
+| 148 tests (hummbl-base120) | `quickstart.mdx` | hummbl-base120 source | 2026-07-11 | Medium — verify against source |
 
 ## Retired/superseded claims
 
