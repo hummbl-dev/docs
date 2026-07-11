@@ -24,7 +24,9 @@ SCAN_GLOBS = ["*.mdx", "README.md", "CLAIM_LEDGER.md"]
 
 
 def main():
-    repo_root = os.path.join(os.path.dirname(__file__), "..")
+    # Resolve repo root relative to this script file
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_root = os.path.dirname(script_dir)
     findings = []
 
     for root, dirs, files in os.walk(repo_root):

@@ -28,7 +28,9 @@ def collect_pages(obj, pages=None):
 
 
 def main():
-    repo_root = os.path.join(os.path.dirname(__file__), "..")
+    # Resolve repo root relative to this script file
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_root = os.path.dirname(script_dir)
     docs_json_path = os.path.join(repo_root, "docs.json")
 
     if not os.path.exists(docs_json_path):
