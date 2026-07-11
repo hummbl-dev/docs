@@ -28,8 +28,8 @@ def collect_pages(obj, pages=None):
 
 
 def main():
-    docs_json_path = os.path.join(os.path.dirname(__file__), "..", "docs.json")
-    repo_root = os.path.dirname(__file__), ".."
+    repo_root = os.path.join(os.path.dirname(__file__), "..")
+    docs_json_path = os.path.join(repo_root, "docs.json")
 
     if not os.path.exists(docs_json_path):
         print("ERROR: docs.json not found")
@@ -46,9 +46,9 @@ def main():
     for page in pages:
         # Check for .mdx, .md, or directory
         candidates = [
-            os.path.join(repo_root[0], repo_root[1], page + ".mdx"),
-            os.path.join(repo_root[0], repo_root[1], page + ".md"),
-            os.path.join(repo_root[0], repo_root[1], page),
+            os.path.join(repo_root, page + ".mdx"),
+            os.path.join(repo_root, page + ".md"),
+            os.path.join(repo_root, page),
         ]
         if not any(os.path.exists(c) for c in candidates):
             missing.append(page)
