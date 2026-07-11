@@ -1,55 +1,52 @@
-# Mintlify Starter Kit
+# HUMMBL Public Documentation
 
-Use the starter kit to get your docs deployed and ready to customize.
+This repository is the **canonical public documentation source-of-record** for HUMMBL AI governance infrastructure. It is built with [Mintlify](https://mintlify.com) and deployed from the default branch.
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+## What lives here
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+- Public docs for HUMMBL governance primitives, compliance frameworks, Base120, tools, and REST API
+- `docs.json` — Mintlify site configuration (navigation, theme, branding)
+- `*.mdx` — documentation source pages
+- `docs/adr/` — public architecture decision records
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
+## Local preview
 
-## AI-assisted writing
-
-Set up your AI coding tool to work with Mintlify:
+Install the [Mintlify CLI](https://www.npmjs.com/package/mint):
 
 ```bash
-npx skills add https://mintlify.com/docs
-```
-
-This command installs Mintlify's documentation skill for your configured AI tools like Claude Code, Cursor, Windsurf, and others. The skill includes component reference, writing standards, and workflow guidance.
-
-See the [AI tools guides](/ai-tools) for tool-specific setup.
-
-## Development
-
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
-
-```
 npm i -g mint
 ```
 
-Run the following command at the root of your documentation, where your `docs.json` is located:
+Run the dev server from the repo root (where `docs.json` is located):
 
-```
+```bash
 mint dev
 ```
 
-View your local preview at `http://localhost:3000`.
+Preview at `http://localhost:3000`.
 
 ## Publishing changes
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
+Changes pushed to `main` are deployed to production automatically via the Mintlify GitHub App. **Do not push to `main` without review.** All public-facing claims must pass the claim-evidence policy before publication.
 
-## Need help?
+### Claim-evidence policy
 
-### Troubleshooting
+Public docs that make compliance, primitive-count, test-count, or product capability claims must cite the internal evidence ledger or current primary source. See:
 
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
+- `hummbl-dev/hummbl-governance` — governance primitives source
+- `hummbl-dev/founder-mode` — integration testbed and canonical test counts
+- `hummbl-dev/claim-evidence-ledger` — claim tracking
 
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+## Related surfaces
+
+- [`hummbl-dev/mintlify-docs`](https://github.com/hummbl-dev/mintlify-docs) — staging/experimental docs surface
+- [`hummbl-dev/hummbl-dev`](https://github.com/hummbl-dev/hummbl-dev) — org-level README and public metadata
+- [`hummbl-dev/hummbl-production`](https://github.com/hummbl-dev/hummbl-production) — production deployment configs
+
+## Contributing
+
+1. Create a branch from `main`.
+2. Edit `.mdx` files or `docs.json`.
+3. Preview locally with `mint dev`.
+4. Open a PR. Ensure no unverified claims are introduced.
+5. After review and merge, changes deploy automatically.
