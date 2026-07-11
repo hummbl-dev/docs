@@ -21,7 +21,13 @@ jobs:
           python-version: '3.12'
 
       - name: Validate docs.json page references
-        run: python3 scripts/validate_docs.py
+        run: |
+          echo "=== Running validate_docs.py ==="
+          python3 scripts/validate_docs.py
+          echo "=== validate_docs.py exit: $? ==="
 
       - name: Check for stale quantitative claims
-        run: python3 scripts/check_claims.py
+        run: |
+          echo "=== Running check_claims.py ==="
+          python3 scripts/check_claims.py
+          echo "=== check_claims.py exit: $? ==="
