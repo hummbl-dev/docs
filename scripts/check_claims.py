@@ -23,6 +23,12 @@ CLAIM_PATTERNS = [
 SCAN_GLOBS = ["*.mdx", "README.md", "CLAIM_LEDGER.md"]
 
 
+def read_text_file(filepath: str) -> str:
+    """Read repository docs as UTF-8 regardless of host locale."""
+    with open(filepath, encoding="utf-8") as f:
+        return f.read()
+
+
 def main():
     # Resolve repo root relative to this script file
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -36,8 +42,7 @@ def main():
             if filename.endswith((".mdx", ".md")):
                 filepath = os.path.join(root, filename)
                 relpath = os.path.relpath(filepath, repo_root)
-                with open(filepath) as f:
-                    content = f.read()
+                content = read_text_file(filepath)
                 # Skip CLAIM_LEDGER.md itself — it's the policy file, not a claim source
                 if filename == "CLAIM_LEDGER.md":
                     continue
