@@ -22,7 +22,6 @@ CLAIM_PATTERNS = [
 # Files to scan
 SCAN_GLOBS = ["*.mdx", "README.md", "CLAIM_LEDGER.md"]
 
-
 def read_text_file(filepath: str) -> str:
     """Read repository docs as UTF-8 regardless of host locale."""
     with open(filepath, encoding="utf-8") as f:
