@@ -233,7 +233,7 @@ All time
  
  ---------
  
- Co-authored-by: reubenbowlby <1+reubenbowlby@noreply.anvil.tail0ff7b3.ts.net>
+ Co-authored-by: redacted <redacted@noreply.invalid>
  Co-authored-by: Devin <158243242+devin-ai-integration[bot]@users.noreply.github.com>') [#8](https://github.com/hummbl-dev/evidence-gate/pull/8) [)](https://github.com/hummbl-dev/evidence-gate/commit/1fd5c3ae81836537aebdf3b11b65f31f1afbc633 'docs: add llms.txt, badges, and hummbl.io link (#8)
  
  * docs: add repo health metadata
@@ -258,7 +258,7 @@ All time
  
  ---------
  
- Co-authored-by: reubenbowlby <1+reubenbowlby@noreply.anvil.tail0ff7b3.ts.net>
+ Co-authored-by: redacted <redacted@noreply.invalid>
  Co-authored-by: Devin <158243242+devin-ai-integration[bot]@users.noreply.github.com>')
  
  Show description for 1fd5c3a
